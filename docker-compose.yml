@@ -1,0 +1,310 @@
+name: ecommerce-event-driven
+
+# ============================================================================
+# CONFIG COMPARTILHADA
+# Anchor reaproveitada em todo container de Postgres, pra não repetir
+# image/restart/healthcheck em cada bloco de serviço lá embaixo.
+# ============================================================================
+x-postgres-base: &postgres-base
+  image: postgres:16-alpine
+  restart: unless-stopped
+  networks:
+    - ecommerce-network
+
+x-app-base: &app-base
+  restart: unless-stopped
+  networks:
+    - ecommerce-network
+
+services:
+  # ==========================================================================
+  # AUTH — auth-db + auth-service
+  # ==========================================================================
+  auth-db:
+    <<: *postgres-base
+    container_name: auth-db
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${AUTH_DB_NAME}
+    ports:
+      - "${AUTH_DB_PORT}:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    <<: *app-base
+    container_name: auth-service
+    build:
+      context: ./Micro-services/auth
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME}
+    ports:
+      - "${AUTH_APP_PORT}:3000"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # CART — cart-db + cart-service
+  # ==========================================================================
+  cart-db:
+    <<: *postgres-base
+    container_name: cart-db
+    environment:
+      POSTGRES_USER: ${CART_DB_USER}
+      POSTGRES_PASSWORD: ${CART_DB_PASSWORD}
+      POSTGRES_DB: ${CART_DB_NAME}
+    ports:
+      - "${CART_DB_PORT}:5432"
+    volumes:
+      - cart_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CART_DB_USER} -d ${CART_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  cart-service:
+    <<: *app-base
+    container_name: cart-service
+    build:
+      context: ./Micro-services/cart
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${CART_DB_USER}:${CART_DB_PASSWORD}@cart-db:5432/${CART_DB_NAME}
+    ports:
+      - "${CART_APP_PORT}:3000"
+    depends_on:
+      cart-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # CATALOG — catalog-db + catalog-service
+  # ==========================================================================
+  catalog-db:
+    <<: *postgres-base
+    container_name: catalog-db
+    environment:
+      POSTGRES_USER: ${CATALOG_DB_USER}
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD}
+      POSTGRES_DB: ${CATALOG_DB_NAME}
+    ports:
+      - "${CATALOG_DB_PORT}:5432"
+    volumes:
+      - catalog_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CATALOG_DB_USER} -d ${CATALOG_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  catalog-service:
+    <<: *app-base
+    container_name: catalog-service
+    build:
+      context: ./Micro-services/catalog
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${CATALOG_DB_USER}:${CATALOG_DB_PASSWORD}@catalog-db:5432/${CATALOG_DB_NAME}
+    ports:
+      - "${CATALOG_APP_PORT}:3000"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # INVENTORY — inventory-db + inventory-service
+  # ==========================================================================
+  inventory-db:
+    <<: *postgres-base
+    container_name: inventory-db
+    environment:
+      POSTGRES_USER: ${INVENTORY_DB_USER}
+      POSTGRES_PASSWORD: ${INVENTORY_DB_PASSWORD}
+      POSTGRES_DB: ${INVENTORY_DB_NAME}
+    ports:
+      - "${INVENTORY_DB_PORT}:5432"
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${INVENTORY_DB_USER} -d ${INVENTORY_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inventory-service:
+    <<: *app-base
+    container_name: inventory-service
+    build:
+      context: ./Micro-services/inventory
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${INVENTORY_DB_USER}:${INVENTORY_DB_PASSWORD}@inventory-db:5432/${INVENTORY_DB_NAME}
+    ports:
+      - "${INVENTORY_APP_PORT}:3000"
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # NOTIFICATION — notification-db + notification-service
+  # ==========================================================================
+  notification-db:
+    <<: *postgres-base
+    container_name: notification-db
+    environment:
+      POSTGRES_USER: ${NOTIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME}
+    ports:
+      - "${NOTIFICATION_DB_PORT}:5432"
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NOTIFICATION_DB_USER} -d ${NOTIFICATION_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  notification-service:
+    <<: *app-base
+    container_name: notification-service
+    build:
+      context: ./Micro-services/notification
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
+    ports:
+      - "${NOTIFICATION_APP_PORT}:3000"
+    depends_on:
+      notification-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # ORDER — order-db + order-service
+  # ==========================================================================
+  order-db:
+    <<: *postgres-base
+    container_name: order-db
+    environment:
+      POSTGRES_USER: ${ORDER_DB_USER}
+      POSTGRES_PASSWORD: ${ORDER_DB_PASSWORD}
+      POSTGRES_DB: ${ORDER_DB_NAME}
+    ports:
+      - "${ORDER_DB_PORT}:5432"
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ORDER_DB_USER} -d ${ORDER_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  order-service:
+    <<: *app-base
+    container_name: order-service
+    build:
+      context: ./Micro-services/order
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${ORDER_DB_USER}:${ORDER_DB_PASSWORD}@order-db:5432/${ORDER_DB_NAME}
+    ports:
+      - "${ORDER_APP_PORT}:3000"
+    depends_on:
+      order-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # PAYMENT — payment-db + payment-service
+  # ==========================================================================
+  payment-db:
+    <<: *postgres-base
+    container_name: payment-db
+    environment:
+      POSTGRES_USER: ${PAYMENT_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      POSTGRES_DB: ${PAYMENT_DB_NAME}
+    ports:
+      - "${PAYMENT_DB_PORT}:5432"
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER} -d ${PAYMENT_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  payment-service:
+    <<: *app-base
+    container_name: payment-service
+    build:
+      context: ./Micro-services/payment
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${PAYMENT_DB_USER}:${PAYMENT_DB_PASSWORD}@payment-db:5432/${PAYMENT_DB_NAME}
+    ports:
+      - "${PAYMENT_APP_PORT}:3000"
+    depends_on:
+      payment-db:
+        condition: service_healthy
+
+  # ==========================================================================
+  # SHIPPING — shipping-db + shipping-service
+  # ==========================================================================
+  shipping-db:
+    <<: *postgres-base
+    container_name: shipping-db
+    environment:
+      POSTGRES_USER: ${SHIPPING_DB_USER}
+      POSTGRES_PASSWORD: ${SHIPPING_DB_PASSWORD}
+      POSTGRES_DB: ${SHIPPING_DB_NAME}
+    ports:
+      - "${SHIPPING_DB_PORT}:5432"
+    volumes:
+      - shipping_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SHIPPING_DB_USER} -d ${SHIPPING_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  shipping-service:
+    <<: *app-base
+    container_name: shipping-service
+    build:
+      context: ./Micro-services/shipping
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${SHIPPING_DB_USER}:${SHIPPING_DB_PASSWORD}@shipping-db:5432/${SHIPPING_DB_NAME}
+    ports:
+      - "${SHIPPING_APP_PORT}:3000"
+    depends_on:
+      shipping-db:
+        condition: service_healthy
+
+# ==============================================================================
+# REDE — todos os serviços conversam entre si por aqui (via nome do container)
+# ==============================================================================
+networks:
+  ecommerce-network:
+    driver: bridge
+
+# ==============================================================================
+# VOLUMES — um volume nomeado por banco, pra dados persistirem entre restarts
+# ==============================================================================
+volumes:
+  auth_db_data:
+  cart_db_data:
+  catalog_db_data:
+  inventory_db_data:
+  notification_db_data:
+  order_db_data:
+  payment_db_data:
+  shipping_db_data:

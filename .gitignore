@@ -1,0 +1,14 @@
+# Env files (contêm credenciais locais, não commitar)
+.env
+.env.local
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
