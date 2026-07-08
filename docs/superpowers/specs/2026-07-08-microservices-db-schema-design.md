@@ -27,7 +27,11 @@ Decisões de negócio que moldam o modelo:
   compartilhada entre serviços (ex: `Seller.userId`, que aponta pro `User.id` do auth-db sem FK
   cross-database).
 - Dinheiro: sempre `Decimal @db.Decimal(12,2)`, nunca float.
-- Toda tabela tem `createdAt`/`updatedAt`.
+- Toda tabela tem `createdAt`/`updatedAt`, exceto linhas write-once (nunca mutadas depois de
+  criadas). `ProcessedEvent`, `MpWebhookEvent` e `FreightQuote` usam um timestamp único e mais
+  descritivo em vez do par genérico (`processedAt`, `receivedAt`/`processedAt`, `requestedAt`).
+  `OrderItem` também é write-once (snapshot congelado de preço/sku/peso no pedido), mas mantém o
+  nome `createdAt` normal, só sem `updatedAt`. Ver seção de cada serviço.
 - **Transactional Outbox** em todo serviço que publica evento — grava o evento na mesma transação
   do Postgres que grava a mudança de estado; um poller separado publica no Kafka e marca como
   enviado:
