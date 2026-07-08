@@ -78,10 +78,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: auth-service
+      KAFKA_CONSUMER_GROUP_ID: auth-service-group
     ports:
       - "${AUTH_APP_PORT}:3000"
     depends_on:
       auth-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -112,10 +117,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${CART_DB_USER}:${CART_DB_PASSWORD}@cart-db:5432/${CART_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: cart-service
+      KAFKA_CONSUMER_GROUP_ID: cart-service-group
     ports:
       - "${CART_APP_PORT}:3000"
     depends_on:
       cart-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -146,10 +156,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${CATALOG_DB_USER}:${CATALOG_DB_PASSWORD}@catalog-db:5432/${CATALOG_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: catalog-service
+      KAFKA_CONSUMER_GROUP_ID: catalog-service-group
     ports:
       - "${CATALOG_APP_PORT}:3000"
     depends_on:
       catalog-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -180,10 +195,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${INVENTORY_DB_USER}:${INVENTORY_DB_PASSWORD}@inventory-db:5432/${INVENTORY_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: inventory-service
+      KAFKA_CONSUMER_GROUP_ID: inventory-service-group
     ports:
       - "${INVENTORY_APP_PORT}:3000"
     depends_on:
       inventory-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -214,10 +234,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: notification-service
+      KAFKA_CONSUMER_GROUP_ID: notification-service-group
     ports:
       - "${NOTIFICATION_APP_PORT}:3000"
     depends_on:
       notification-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -248,10 +273,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${ORDER_DB_USER}:${ORDER_DB_PASSWORD}@order-db:5432/${ORDER_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: order-service
+      KAFKA_CONSUMER_GROUP_ID: order-service-group
     ports:
       - "${ORDER_APP_PORT}:3000"
     depends_on:
       order-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -282,10 +312,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${PAYMENT_DB_USER}:${PAYMENT_DB_PASSWORD}@payment-db:5432/${PAYMENT_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: payment-service
+      KAFKA_CONSUMER_GROUP_ID: payment-service-group
     ports:
       - "${PAYMENT_APP_PORT}:3000"
     depends_on:
       payment-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ==========================================================================
@@ -316,10 +351,15 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${SHIPPING_DB_USER}:${SHIPPING_DB_PASSWORD}@shipping-db:5432/${SHIPPING_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: shipping-service
+      KAFKA_CONSUMER_GROUP_ID: shipping-service-group
     ports:
       - "${SHIPPING_APP_PORT}:3000"
     depends_on:
       shipping-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
 # ==============================================================================
