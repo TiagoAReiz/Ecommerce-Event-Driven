@@ -75,6 +75,32 @@ describe('catalog-db schema', () => {
     expect(sellerWithProducts.products).toHaveLength(1);
   });
 
+  it('rejects a duplicate Seller document', async () => {
+    const document = '12345678901';
+    const seller1 = await prisma.seller.create({
+      data: {
+        userId: randomUUID(),
+        storeName: 'Loja Primeira',
+        slug: `loja-1-${randomUUID()}`,
+        document,
+        mpCollectorId: 'mp-collector-1',
+      },
+    });
+    createdSellerIds.push(seller1.id);
+
+    await expect(
+      prisma.seller.create({
+        data: {
+          userId: randomUUID(),
+          storeName: 'Loja Segunda',
+          slug: `loja-2-${randomUUID()}`,
+          document,
+          mpCollectorId: 'mp-collector-2',
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
   it('rejects a duplicate ProductVariant sku', async () => {
     const seller = await prisma.seller.create({
       data: {
