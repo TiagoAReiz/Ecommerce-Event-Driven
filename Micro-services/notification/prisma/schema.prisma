@@ -5,3 +5,37 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model NotificationLog {
+  id             String             @id @default(uuid())
+  userId         String
+  type           NotificationType
+  recipientEmail String
+  subject        String
+  status         NotificationStatus @default(PENDING)
+  sentAt         DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+enum NotificationType {
+  ORDER_CREATED
+  PAYMENT_CONFIRMED
+  PAYMENT_FAILED
+  SHIPMENT_DISPATCHED
+  SHIPMENT_DELIVERED
+  ORDER_CANCELLED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model ProcessedEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime @default(now())
+}
