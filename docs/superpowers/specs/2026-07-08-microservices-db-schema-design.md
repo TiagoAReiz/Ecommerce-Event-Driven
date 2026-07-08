@@ -40,6 +40,7 @@ Decisões de negócio que moldam o modelo:
     payload       Json
     status        OutboxStatus @default(PENDING)
     createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
     publishedAt   DateTime?
   }
   enum OutboxStatus { PENDING PUBLISHED FAILED }
@@ -54,6 +55,9 @@ Decisões de negócio que moldam o modelo:
     processedAt DateTime @default(now())
   }
   ```
+  `processedAt` é uma exceção deliberada à convenção `createdAt`/`updatedAt`: a linha é criada uma
+  vez e nunca mutada, então um nome que descreve o que aconteceu é mais claro que um `createdAt`
+  genérico, e não precisa de `updatedAt`.
 - Envelope de evento (contrato, não é tabela): `{ eventId: uuid, eventType, occurredAt, version, payload }`.
 
 Nem todo serviço precisa das duas tabelas: cart não publica nem consome eventos de domínio
