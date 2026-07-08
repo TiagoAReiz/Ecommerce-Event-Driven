@@ -5,3 +5,25 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     CartItem[]
+}
+
+model CartItem {
+  id                String   @id @default(uuid())
+  cartId            String
+  cart              Cart     @relation(fields: [cartId], references: [id])
+  variantId         String
+  sellerId          String
+  quantity          Int
+  unitPriceSnapshot Decimal  @db.Decimal(12, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+}
