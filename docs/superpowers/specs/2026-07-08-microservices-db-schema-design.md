@@ -345,6 +345,7 @@ model MpWebhookEvent {
 model SellerPaymentProfile {
   sellerId      String   @id
   mpCollectorId String
+  createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 ```
@@ -429,6 +430,7 @@ model NotificationLog {
   status         NotificationStatus @default(PENDING)
   sentAt         DateTime?
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 enum NotificationType {
   ORDER_CREATED
