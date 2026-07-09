@@ -49,8 +49,18 @@ para o desenho completo do modelo de dados e catálogo de eventos.
 - **Saga**: coreografia (order-service reage a eventos, não manda comando pros outros serviços).
 - **Estoque**: reserva com TTL no início do checkout, confirmada ou liberada depois.
 - **Cart**: carrinho anônimo só no navegador; cart-service só persiste carrinho de usuário logado.
+- **API**: sem API Gateway — front-end chama cada um dos 8 serviços diretamente. Auth via JWT
+  stateless assinado pelo auth-service, validado localmente em cada serviço (sem round-trip
+  síncrono pro auth-service).
 
 Detalhes completos e o porquê de cada decisão: `docs/superpowers/specs/2026-07-08-microservices-db-schema-design.md`.
+
+## Infraestrutura futura planejada (ainda não implementada)
+
+- **Nginx como reverse proxy** na frente de tudo — dos 8 microsserviços e também do front-end
+  (Next.js, ainda não iniciado) — para centralizar rate limiting, timeouts e roteamento por
+  domínio/path. Não substitui a validação de JWT feita em cada serviço; é só a camada de borda.
+  Ainda não há arquivo de config nem serviço no repo — planejar quando a app for pra staging/prod.
 
 ## Próximos passos sugeridos
 
