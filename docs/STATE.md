@@ -14,7 +14,7 @@ para o desenho completo do modelo de dados e catálogo de eventos.
 
 | Serviço | Schema DB | Migrations | Testes de schema | Kafka producers/consumers | Lógica de negócio | Integrações externas |
 |---|---|---|---|---|---|---|
-| auth | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ | ⬜ Google OAuth |
+| auth | ✅ | ✅ | ✅ (3) | 🟡 (produtor) | ✅ (login + JWT) | ✅ Google OAuth |
 | catalog | ✅ | ✅ | ✅ (4) | ⬜ | ⬜ | — |
 | cart | ✅ | ✅ | ✅ (2) | — (não consome/publica) | ⬜ | — |
 | inventory | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ (reserva/expiração de estoque) | — |
@@ -23,7 +23,12 @@ para o desenho completo do modelo de dados e catálogo de eventos.
 | shipping | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ | ⬜ Correios (CEP + frete) |
 | notification | ✅ | ✅ | ✅ (2) | ⬜ (só consome) | ⬜ (envio de email) | — |
 
-✅ = feito e mergeado em `master` (2026-07-08) · ⬜ = não iniciado
+✅ = feito e mergeado em `master` · ⬜ = não iniciado · 🟡 = parcial (ver nota abaixo)
+
+🟡 **auth**: o outbox relay publica em `auth-events` (`UserRegistered`, `UserRoleChanged`), mas
+auth ainda não tem nenhum **consumer** — o consumo de `SellerOnboarded` do catalog (pra promover
+`User.role` a `SELLER`) só entra quando o plano de catalog+seller onboarding for implementado. Ver
+`docs/superpowers/plans/2026-07-09-auth-foundation.md`.
 
 ## Débitos técnicos / follow-ups conhecidos
 
