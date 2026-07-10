@@ -7,7 +7,7 @@ import { JwtAuthGuard } from './adapters/in/http/jwt-auth.guard';
 import { AuthService } from './core/auth/auth.service';
 import { GoogleOAuthService } from './adapters/out/external/google-oauth.service';
 import { TokenService } from './application/services/token.service';
-import { OutboxRelayService } from './core/auth/outbox-relay.service';
+import { OutboxRelayService } from './application/services/outbox-relay.service';
 import { USER_REPOSITORY } from './core/interfaces/repositories/user-repository.interface';
 import { OUTBOX_EVENT_REPOSITORY } from './core/interfaces/repositories/outbox-event-repository.interface';
 import { EVENT_PUBLISHER } from './core/interfaces/external/event-publisher.interface';
