@@ -1,6 +1,6 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { ITokenService } from '../../../core/interfaces/services/token-service.interface';
+import { ITokenService } from '../../../../core/interfaces/services/token-service.interface';
 
 function mockContext(headers: Record<string, string>): ExecutionContext {
   const request: any = { headers };

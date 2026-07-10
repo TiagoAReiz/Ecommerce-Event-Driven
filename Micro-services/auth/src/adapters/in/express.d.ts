@@ -1,4 +1,4 @@
-import { AccessTokenPayload } from '../../../core/interfaces/services/token-service.interface';
+import { AccessTokenPayload } from '../../core/interfaces/services/token-service.interface';
 
 declare global {
   namespace Express {

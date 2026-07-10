@@ -5,7 +5,7 @@ import { AUTH_SERVICE } from '../../../core/interfaces/services/auth-service.int
 import type { IAuthService } from '../../../core/interfaces/services/auth-service.interface';
 import { UserMapper } from '../../../application/mappers/user.mapper';
 import type { LoginResponseDto } from '../dtos/login-response.dto';
-import type { RefreshTokenDto } from './dto/refresh-token.dto';
+import type { RefreshTokenDto } from '../dtos/refresh-token.dto';
 
 const OAUTH_STATE_COOKIE = 'oauth_state';
 const OAUTH_STATE_COOKIE_MAX_AGE_MS = 5 * 60 * 1000;
