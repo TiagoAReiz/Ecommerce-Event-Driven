@@ -4,7 +4,7 @@ import { USER_SERVICE } from '../../../core/interfaces/services/user-service.int
 import type { IUserService } from '../../../core/interfaces/services/user-service.interface';
 import { UserMapper } from '../../../application/mappers/user.mapper';
 import type { UserResponseDto } from '../dtos/user-response.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
