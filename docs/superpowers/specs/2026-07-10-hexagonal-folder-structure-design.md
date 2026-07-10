@@ -200,8 +200,12 @@ Todos os `.spec.ts` movem junto e passam a mockar **portas** em vez de Prisma/Ka
 ### Invariantes (o que NÃO muda)
 
 - Rotas, verbos, status codes e shapes de resposta: idênticos. Os 12 testes e2e passam **sem
-  alterar nenhuma asserção de status/body** (única edição permitida nos e2e: resolver
-  `TokenService` por token — `app.get(TOKEN_SERVICE)` — em `users.e2e-spec.ts`).
+  alterar nenhuma asserção de status/body**. Únicas edições permitidas nos e2e (wiring de DI, não
+  comportamento): resolver `TokenService` por token (`app.get<ITokenService>(TOKEN_SERVICE)`) em
+  `users.e2e-spec.ts`, e trocar `.overrideProvider(GoogleOAuthService)` por
+  `.overrideProvider(GOOGLE_OAUTH_SERVICE)` em `auth.e2e-spec.ts` e `outbox-relay.e2e-spec.ts` —
+  com o binding por token, o override precisa mirar o Symbol, senão o mock não é aplicado e o
+  e2e tentaria construir o cliente Google real.
 - Envelope Kafka, tópico `auth-events`, partition key, CSRF do OAuth state, cookie httpOnly: intactos.
 - `npx tsc --noEmit -p tsconfig.build.json` continua saindo 0 (manter `import type` para
   `Request`/`Response` em arquivos com decorators).
