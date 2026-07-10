@@ -8,10 +8,25 @@ import { AuthService } from './core/auth/auth.service';
 import { GoogleOAuthService } from './core/auth/google-oauth.service';
 import { TokenService } from './core/auth/token.service';
 import { OutboxRelayService } from './core/auth/outbox-relay.service';
+import { USER_REPOSITORY } from './core/interfaces/repositories/user-repository.interface';
+import { OUTBOX_EVENT_REPOSITORY } from './core/interfaces/repositories/outbox-event-repository.interface';
+import { EVENT_PUBLISHER } from './core/interfaces/external/event-publisher.interface';
+import { UserRepository } from './adapters/out/repositories/user.repository';
+import { OutboxEventRepository } from './adapters/out/repositories/outbox-event.repository';
+import { KafkaEventPublisher } from './adapters/out/external/kafka-event-publisher';
 
 @Module({
   imports: [ScheduleModule.forRoot(), JwtModule.register({})],
   controllers: [AuthController, UsersController],
-  providers: [AuthService, GoogleOAuthService, TokenService, JwtAuthGuard, OutboxRelayService],
+  providers: [
+    AuthService,
+    GoogleOAuthService,
+    TokenService,
+    JwtAuthGuard,
+    OutboxRelayService,
+    { provide: USER_REPOSITORY, useClass: UserRepository },
+    { provide: OUTBOX_EVENT_REPOSITORY, useClass: OutboxEventRepository },
+    { provide: EVENT_PUBLISHER, useClass: KafkaEventPublisher },
+  ],
 })
 export class AuthModule {}
