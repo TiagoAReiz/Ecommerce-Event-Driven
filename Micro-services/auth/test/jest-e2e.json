@@ -10,5 +10,6 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "passWithNoTests": true
+  "passWithNoTests": true,
+  "maxWorkers": 1
 }

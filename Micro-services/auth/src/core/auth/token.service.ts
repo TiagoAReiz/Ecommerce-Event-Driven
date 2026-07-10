@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 
 export interface AccessTokenPayload {
   sub: string;
@@ -20,13 +20,15 @@ export class TokenService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+        // env vars are plain `string`; the `ms` package's StringValue template-literal
+        // type can't be proven statically, so assert it here rather than widen the option.
+        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN ?? '15m') as JwtSignOptions['expiresIn'],
       }),
       this.jwtService.signAsync(
         { sub: payload.sub },
         {
           secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+          expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as JwtSignOptions['expiresIn'],
         },
       ),
     ]);
