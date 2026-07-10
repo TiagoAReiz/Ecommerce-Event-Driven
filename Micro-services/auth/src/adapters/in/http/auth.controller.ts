@@ -1,8 +1,11 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { AuthService } from '../../../core/auth/auth.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+
+const OAUTH_STATE_COOKIE = 'oauth_state';
+const OAUTH_STATE_COOKIE_MAX_AGE_MS = 5 * 60 * 1000;
 
 @Controller('auth')
 export class AuthController {
@@ -10,12 +13,30 @@ export class AuthController {
 
   @Get('google')
   redirectToGoogle(@Res() res: Response) {
-    const url = this.authService.buildGoogleAuthUrl(randomUUID());
+    const state = randomUUID();
+    res.cookie(OAUTH_STATE_COOKIE, state, {
+      httpOnly: true,
+      maxAge: OAUTH_STATE_COOKIE_MAX_AGE_MS,
+      sameSite: 'lax',
+    });
+    const url = this.authService.buildGoogleAuthUrl(state);
     res.redirect(url);
   }
 
   @Get('google/callback')
-  async googleCallback(@Query('code') code: string) {
+  async googleCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const cookieState: string | undefined = req.cookies?.[OAUTH_STATE_COOKIE];
+    res.clearCookie(OAUTH_STATE_COOKIE);
+
+    if (!state || !cookieState || state !== cookieState) {
+      throw new BadRequestException('Invalid or missing OAuth state');
+    }
+
     return this.authService.loginWithGoogleCode(code);
   }
 

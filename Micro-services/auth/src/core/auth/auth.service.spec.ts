@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 function buildService() {
@@ -99,10 +101,51 @@ describe('AuthService', () => {
     expect(result).toEqual({ accessToken: 'new-at' });
   });
 
-  it('propagates the rejection for an invalid refresh token', async () => {
+  it('rejects with UnauthorizedException for an invalid refresh token', async () => {
     const { service, tokenService } = buildService();
     tokenService.verifyRefreshToken.mockRejectedValue(new Error('invalid token'));
 
-    await expect(service.refreshAccessToken('bad-token')).rejects.toThrow('invalid token');
+    await expect(service.refreshAccessToken('bad-token')).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('rejects with BadRequestException when Google code exchange fails', async () => {
+    const { service, googleOAuth } = buildService();
+    googleOAuth.exchangeCodeForProfile.mockRejectedValue(new Error('invalid_grant'));
+
+    await expect(service.loginWithGoogleCode('bad-code')).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects with ConflictException when the new user email collides with an existing account', async () => {
+    const { service, prisma, tx, googleOAuth } = buildService();
+    prisma.user.findUnique.mockResolvedValue(null);
+    googleOAuth.exchangeCodeForProfile.mockResolvedValue({
+      googleId: 'g-2',
+      email: 'taken@example.com',
+      name: 'Someone',
+      avatarUrl: null,
+    });
+    tx.user.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed on the fields: (`email`)', {
+        code: 'P2002',
+        clientVersion: '7.8.0',
+      }),
+    );
+
+    await expect(service.loginWithGoogleCode('code-2')).rejects.toThrow(ConflictException);
+  });
+
+  it('rejects with UnauthorizedException when the refresh token fails verification', async () => {
+    const { service, tokenService } = buildService();
+    tokenService.verifyRefreshToken.mockRejectedValue(new Error('jwt expired'));
+
+    await expect(service.refreshAccessToken('expired-token')).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('rejects with UnauthorizedException when the refresh token references a deleted user', async () => {
+    const { service, prisma, tokenService } = buildService();
+    tokenService.verifyRefreshToken.mockResolvedValue({ sub: 'deleted-user' });
+    prisma.user.findUniqueOrThrow.mockRejectedValue(new Error('P2025: record not found'));
+
+    await expect(service.refreshAccessToken('token-for-deleted-user')).rejects.toThrow(UnauthorizedException);
   });
 });

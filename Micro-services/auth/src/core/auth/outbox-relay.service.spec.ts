@@ -63,4 +63,53 @@ describe('OutboxRelayService', () => {
 
     expect(producer.publish).not.toHaveBeenCalled();
   });
+
+  it("uses the outbox event's own id as the envelope eventId, not a freshly generated one", async () => {
+    const { service, prisma, producer } = buildService();
+    prisma.outboxEvent.findMany.mockResolvedValue([
+      {
+        id: 'evt-stable-id',
+        aggregateType: 'User',
+        aggregateId: 'user-1',
+        eventType: 'UserRegistered',
+        payload: {},
+        createdAt: new Date(),
+      },
+    ]);
+    producer.publish.mockResolvedValue(undefined);
+
+    await service.relayPendingEvents();
+
+    const [, messages] = producer.publish.mock.calls[0];
+    const envelope = JSON.parse(messages[0].value);
+    expect(envelope.eventId).toBe('evt-stable-id');
+  });
+
+  it('does not start a second poll while a previous one is still in flight', async () => {
+    const { service, prisma, producer } = buildService();
+    let resolvePublish: () => void = () => {};
+    const publishPromise = new Promise<void>((resolve) => {
+      resolvePublish = resolve;
+    });
+
+    prisma.outboxEvent.findMany.mockResolvedValue([
+      {
+        id: 'evt-1',
+        aggregateType: 'User',
+        aggregateId: 'user-1',
+        eventType: 'UserRegistered',
+        payload: {},
+        createdAt: new Date(),
+      },
+    ]);
+    producer.publish.mockReturnValue(publishPromise);
+
+    const firstCall = service.relayPendingEvents();
+    const secondCall = service.relayPendingEvents();
+
+    resolvePublish();
+    await Promise.all([firstCall, secondCall]);
+
+    expect(prisma.outboxEvent.findMany).toHaveBeenCalledTimes(1);
+  });
 });

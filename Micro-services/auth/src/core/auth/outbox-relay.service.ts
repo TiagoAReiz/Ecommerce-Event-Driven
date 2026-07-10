@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../adapters/out/database/prisma.service';
 import { KafkaProducerService } from '../../adapters/out/messaging/kafka-producer.service';
 
@@ -19,6 +18,7 @@ interface OutboxRow {
 @Injectable()
 export class OutboxRelayService {
   private readonly logger = new Logger(OutboxRelayService.name);
+  private isRelaying = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -27,20 +27,29 @@ export class OutboxRelayService {
 
   @Interval(5000)
   async relayPendingEvents(): Promise<void> {
-    const pending = await this.prisma.outboxEvent.findMany({
-      where: { status: 'PENDING' },
-      orderBy: { createdAt: 'asc' },
-      take: POLL_BATCH_SIZE,
-    });
+    if (this.isRelaying) {
+      return;
+    }
 
-    for (const event of pending as OutboxRow[]) {
-      await this.relayOne(event);
+    this.isRelaying = true;
+    try {
+      const pending = await this.prisma.outboxEvent.findMany({
+        where: { status: 'PENDING' },
+        orderBy: { createdAt: 'asc' },
+        take: POLL_BATCH_SIZE,
+      });
+
+      for (const event of pending as OutboxRow[]) {
+        await this.relayOne(event);
+      }
+    } finally {
+      this.isRelaying = false;
     }
   }
 
   private async relayOne(event: OutboxRow): Promise<void> {
     const envelope = {
-      eventId: randomUUID(),
+      eventId: event.id,
       eventType: event.eventType,
       aggregateType: event.aggregateType,
       aggregateId: event.aggregateId,
