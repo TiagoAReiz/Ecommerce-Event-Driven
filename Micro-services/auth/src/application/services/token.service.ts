@@ -1,19 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-
-export interface AccessTokenPayload {
-  sub: string;
-  email: string;
-  role: string;
-}
-
-export interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-}
+import {
+  AccessTokenPayload,
+  ITokenService,
+  TokenPair,
+} from '../../core/interfaces/services/token-service.interface';
 
 @Injectable()
-export class TokenService {
+export class TokenService implements ITokenService {
   constructor(private readonly jwtService: JwtService) {}
 
   async issueTokenPair(payload: AccessTokenPayload): Promise<TokenPair> {

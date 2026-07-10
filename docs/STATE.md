@@ -57,6 +57,12 @@ auth ainda não tem nenhum **consumer** — o consumo de `SellerOnboarded` do ca
 - **API**: sem API Gateway — front-end chama cada um dos 8 serviços diretamente. Auth via JWT
   stateless assinado pelo auth-service, validado localmente em cada serviço (sem round-trip
   síncrono pro auth-service).
+- **Estrutura de pastas hexagonal padronizada** (definida e aplicada no auth em 2026-07-10):
+  `core/{entities,exceptions,interfaces/{services,external,repositories}}` (puro, Symbols de DI),
+  `application/{services,mappers}` (lógica de negócio), `adapters/in/{controllers/guards,filters,dtos}`,
+  `adapters/out/{repositories,external,database,messaging}`. Exception filter global traduz exceção
+  de domínio → HTTP. Os outros 7 serviços adotam a convenção quando forem implementados. Ver
+  `docs/superpowers/specs/2026-07-10-hexagonal-folder-structure-design.md`.
 
 Detalhes completos e o porquê de cada decisão: `docs/superpowers/specs/2026-07-08-microservices-db-schema-design.md`.
 
