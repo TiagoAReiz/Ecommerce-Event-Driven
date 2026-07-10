@@ -5,12 +5,15 @@ import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/adapters/out/database/prisma.service';
-import { TokenService } from '../src/application/services/token.service';
+import {
+  ITokenService,
+  TOKEN_SERVICE,
+} from '../src/core/interfaces/services/token-service.interface';
 
 describe('GET /users/me (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let tokenService: TokenService;
+  let tokenService: ITokenService;
   let userId: string;
 
   beforeAll(async () => {
@@ -19,7 +22,7 @@ describe('GET /users/me (e2e)', () => {
     app.setGlobalPrefix('api/v1');
     await app.init();
     prisma = app.get(PrismaService);
-    tokenService = app.get(TokenService);
+    tokenService = app.get<ITokenService>(TOKEN_SERVICE);
 
     const user = await prisma.user.create({
       data: {

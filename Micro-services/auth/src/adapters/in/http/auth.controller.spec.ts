@@ -39,7 +39,20 @@ describe('AuthController', () => {
 
   it('logs the user in when the callback state matches the cookie', async () => {
     const { controller, authService } = buildController();
-    authService.loginWithGoogleCode.mockResolvedValue({ accessToken: 'at', refreshToken: 'rt', user: {} });
+    authService.loginWithGoogleCode.mockResolvedValue({
+      accessToken: 'at',
+      refreshToken: 'rt',
+      user: {
+        id: 'user-1',
+        googleId: 'g-1',
+        email: 'a@b.com',
+        name: 'Ana',
+        avatarUrl: null,
+        role: 'CUSTOMER',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
     const req = { cookies: { oauth_state: 'state-123' } } as any;
     const res = { clearCookie: jest.fn() } as any;
 
@@ -47,7 +60,11 @@ describe('AuthController', () => {
 
     expect(authService.loginWithGoogleCode).toHaveBeenCalledWith('auth-code');
     expect(res.clearCookie).toHaveBeenCalledWith('oauth_state');
-    expect(result).toEqual({ accessToken: 'at', refreshToken: 'rt', user: {} });
+    expect(result).toEqual({
+      accessToken: 'at',
+      refreshToken: 'rt',
+      user: { id: 'user-1', email: 'a@b.com', name: 'Ana', avatarUrl: null, role: 'CUSTOMER' },
+    });
   });
 
   it('rejects the callback when the state does not match the cookie', async () => {
