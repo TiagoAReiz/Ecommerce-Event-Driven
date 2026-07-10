@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { AuthService } from '../../../core/auth/auth.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';

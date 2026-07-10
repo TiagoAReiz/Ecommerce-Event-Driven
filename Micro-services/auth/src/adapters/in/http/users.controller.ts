@@ -1,5 +1,5 @@
 import { Controller, Get, NotFoundException, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { PrismaService } from '../../out/database/prisma.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
