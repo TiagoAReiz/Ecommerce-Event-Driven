@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthController } from './adapters/in/http/auth.controller';
@@ -14,6 +15,7 @@ import { EVENT_PUBLISHER } from './core/interfaces/external/event-publisher.inte
 import { UserRepository } from './adapters/out/repositories/user.repository';
 import { OutboxEventRepository } from './adapters/out/repositories/outbox-event.repository';
 import { KafkaEventPublisher } from './adapters/out/external/kafka-event-publisher';
+import { DomainExceptionFilter } from './adapters/in/filters/domain-exception.filter';
 
 @Module({
   imports: [ScheduleModule.forRoot(), JwtModule.register({})],
@@ -27,6 +29,7 @@ import { KafkaEventPublisher } from './adapters/out/external/kafka-event-publish
     { provide: USER_REPOSITORY, useClass: UserRepository },
     { provide: OUTBOX_EVENT_REPOSITORY, useClass: OutboxEventRepository },
     { provide: EVENT_PUBLISHER, useClass: KafkaEventPublisher },
+    { provide: APP_FILTER, useClass: DomainExceptionFilter },
   ],
 })
 export class AuthModule {}
