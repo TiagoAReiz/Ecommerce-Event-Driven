@@ -5,7 +5,7 @@ import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/adapters/out/database/prisma.service';
-import { TokenService } from '../src/core/auth/token.service';
+import { TokenService } from '../src/application/services/token.service';
 
 describe('GET /users/me (e2e)', () => {
   let app: INestApplication;

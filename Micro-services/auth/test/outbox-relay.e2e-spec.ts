@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import cookieParser from 'cookie-parser';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { AppModule } from '../src/app.module';
-import { GoogleOAuthService } from '../src/core/auth/google-oauth.service';
+import { GoogleOAuthService } from '../src/adapters/out/external/google-oauth.service';
 import { PrismaService } from '../src/adapters/out/database/prisma.service';
 
 describe('Outbox relay -> Kafka (e2e)', () => {
