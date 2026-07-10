@@ -1,8 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../adapters/out/database/prisma.service';
-import { GoogleOAuthService, GoogleProfile } from './google-oauth.service';
-import { TokenPair, TokenService } from './token.service';
+import { GoogleOAuthService } from '../../adapters/out/external/google-oauth.service';
+import { GoogleProfile } from '../interfaces/external/google-oauth.interface';
+import { TokenService } from '../../application/services/token.service';
+import { TokenPair } from '../interfaces/services/token-service.interface';
 
 export interface LoginResult extends TokenPair {
   user: {
