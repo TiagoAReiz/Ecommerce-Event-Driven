@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import cookieParser from 'cookie-parser';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { AppModule } from '../src/app.module';
-import { GoogleOAuthService } from '../src/adapters/out/external/google-oauth.service';
+import { GOOGLE_OAUTH_SERVICE } from '../src/core/interfaces/external/google-oauth.interface';
 import { PrismaService } from '../src/adapters/out/database/prisma.service';
 
 describe('Outbox relay -> Kafka (e2e)', () => {
@@ -17,7 +17,7 @@ describe('Outbox relay -> Kafka (e2e)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(GoogleOAuthService)
+      .overrideProvider(GOOGLE_OAUTH_SERVICE)
       .useValue({
         buildAuthUrl: (state: string) => `https://accounts.google.com/mock?state=${state}`,
         exchangeCodeForProfile: async () => ({

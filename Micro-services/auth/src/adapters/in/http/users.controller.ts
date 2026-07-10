@@ -1,26 +1,19 @@
-import { Controller, Get, NotFoundException, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
-import { PrismaService } from '../../out/database/prisma.service';
+import { USER_SERVICE } from '../../../core/interfaces/services/user-service.interface';
+import type { IUserService } from '../../../core/interfaces/services/user-service.interface';
+import { UserMapper } from '../../../application/mappers/user.mapper';
+import type { UserResponseDto } from '../dtos/user-response.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(USER_SERVICE) private readonly userService: IUserService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@Req() request: Request) {
-    const user = await this.prisma.user.findUnique({ where: { id: request.user!.sub } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      role: user.role,
-    };
+  async me(@Req() request: Request): Promise<UserResponseDto> {
+    const user = await this.userService.getProfile(request.user!.sub);
+    return UserMapper.toResponse(user);
   }
 }

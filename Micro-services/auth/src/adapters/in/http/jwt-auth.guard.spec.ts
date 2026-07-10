@@ -1,6 +1,6 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { TokenService } from '../../../core/auth/token.service';
+import { ITokenService } from '../../../core/interfaces/services/token-service.interface';
 
 function mockContext(headers: Record<string, string>): ExecutionContext {
   const request: any = { headers };
@@ -15,7 +15,7 @@ describe('JwtAuthGuard', () => {
       verifyAccessToken: jest
         .fn()
         .mockResolvedValue({ sub: 'user-1', email: 'a@b.com', role: 'CUSTOMER' }),
-    } as unknown as TokenService;
+    } as unknown as ITokenService;
     const guard = new JwtAuthGuard(tokenService);
     const context = mockContext({ authorization: 'Bearer valid-token' });
 
@@ -30,7 +30,7 @@ describe('JwtAuthGuard', () => {
   });
 
   it('rejects when there is no Authorization header', async () => {
-    const tokenService = { verifyAccessToken: jest.fn() } as unknown as TokenService;
+    const tokenService = { verifyAccessToken: jest.fn() } as unknown as ITokenService;
     const guard = new JwtAuthGuard(tokenService);
     const context = mockContext({});
 
@@ -38,7 +38,7 @@ describe('JwtAuthGuard', () => {
   });
 
   it('rejects a header that is not a Bearer token', async () => {
-    const tokenService = { verifyAccessToken: jest.fn() } as unknown as TokenService;
+    const tokenService = { verifyAccessToken: jest.fn() } as unknown as ITokenService;
     const guard = new JwtAuthGuard(tokenService);
     const context = mockContext({ authorization: 'Basic dXNlcjpwYXNz' });
 
@@ -48,7 +48,7 @@ describe('JwtAuthGuard', () => {
   it('rejects when the token fails verification', async () => {
     const tokenService = {
       verifyAccessToken: jest.fn().mockRejectedValue(new Error('bad token')),
-    } as unknown as TokenService;
+    } as unknown as ITokenService;
     const guard = new JwtAuthGuard(tokenService);
     const context = mockContext({ authorization: 'Bearer bad-token' });
 
