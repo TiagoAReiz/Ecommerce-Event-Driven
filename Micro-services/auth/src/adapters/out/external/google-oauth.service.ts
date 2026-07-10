@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { OAuth2Client } from 'google-auth-library';
-
-export interface GoogleProfile {
-  googleId: string;
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-}
+import {
+  GoogleProfile,
+  IGoogleOAuthService,
+} from '../../../core/interfaces/external/google-oauth.interface';
 
 @Injectable()
-export class GoogleOAuthService {
+export class GoogleOAuthService implements IGoogleOAuthService {
   private readonly client: OAuth2Client;
 
   constructor() {
