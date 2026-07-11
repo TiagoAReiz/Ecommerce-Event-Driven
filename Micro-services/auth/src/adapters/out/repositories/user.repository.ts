@@ -7,6 +7,7 @@ import {
   CreateOutboxEventInput,
   CreateUserInput,
   IUserRepository,
+  PromoteToSellerResult,
 } from '../../../core/interfaces/repositories/user-repository.interface';
 
 @Injectable()
@@ -49,6 +50,45 @@ export class UserRepository implements IUserRepository {
       }
       throw error;
     }
+  }
+
+  async promoteToSellerWithInbox(
+    eventId: string,
+    eventType: string,
+    userId: string,
+  ): Promise<PromoteToSellerResult> {
+    return this.prisma.$transaction(async (tx): Promise<PromoteToSellerResult> => {
+      // dedupe de inbox: se já processamos esse eventId, no-op (ProcessedEvent pattern)
+      if (await tx.processedEvent.findUnique({ where: { eventId } })) {
+        return { outcome: 'DEDUPED' };
+      }
+
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      // Usuário desconhecido: marca como processado assim mesmo pra não reentregar em loop
+      // (anomalia — o auth é a fonte dos usuários; o service loga um warning).
+      if (!user) {
+        await tx.processedEvent.create({ data: { eventId, eventType } });
+        return { outcome: 'USER_NOT_FOUND' };
+      }
+
+      if (user.role === 'SELLER') {
+        await tx.processedEvent.create({ data: { eventId, eventType } });
+        return { outcome: 'ALREADY_SELLER' };
+      }
+
+      const oldRole = user.role as UserRole;
+      await tx.user.update({ where: { id: userId }, data: { role: 'SELLER' } });
+      await tx.outboxEvent.create({
+        data: {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'UserRoleChanged',
+          payload: { userId, oldRole, newRole: 'SELLER' } as Prisma.InputJsonValue,
+        },
+      });
+      await tx.processedEvent.create({ data: { eventId, eventType } });
+      return { outcome: 'PROMOTED', oldRole };
+    });
   }
 
   private toEntity(row: PrismaUser): User {

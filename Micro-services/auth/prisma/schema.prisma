@@ -42,3 +42,13 @@ enum OutboxStatus {
   PUBLISHED
   FAILED
 }
+
+// Inbox / idempotência: auth passou a CONSUMIR eventos (SellerOnboarded do catalog) além de
+// publicar. Cada evento consumido grava seu eventId aqui dentro da mesma transação do efeito de
+// negócio, então uma reentrega do mesmo evento vira no-op (dedupe). Additivo (2026-07-11).
+model ProcessedEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime @default(now())
+}
