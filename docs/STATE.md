@@ -12,23 +12,28 @@ para o desenho completo do modelo de dados e catálogo de eventos.
 
 ## Status por serviço
 
-| Serviço | Schema DB | Migrations | Testes de schema | Kafka producers/consumers | Lógica de negócio | Integrações externas |
-|---|---|---|---|---|---|---|
-| auth | ✅ | ✅ | ✅ (3) | 🟡 (produtor) | ✅ (login + JWT) | ✅ Google OAuth |
-| catalog | ✅ | ✅ | ✅ (4) | ⬜ | ⬜ | — |
-| cart | ✅ | ✅ | ✅ (2) | — (não consome/publica) | ⬜ | — |
-| inventory | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ (reserva/expiração de estoque) | — |
-| order | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ (agregação da saga) | — |
-| payment | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ (split de pagamento) | ⬜ Mercado Pago |
-| shipping | ✅ | ✅ | ✅ (3) | ⬜ | ⬜ | ⬜ Correios (CEP + frete) |
-| notification | ✅ | ✅ | ✅ (2) | ⬜ (só consome) | ⬜ (envio de email) | — |
+| Serviço | Schema DB | Migrations | Kafka producers/consumers | Lógica de negócio | Integrações externas |
+|---|---|---|---|---|---|
+| auth | ✅ | ✅ | 🟡 produtor (falta consumer `SellerOnboarded`) | ✅ login + JWT | ✅ Google OAuth |
+| catalog | ✅ | ✅ | ✅ produtor (`catalog-events`) | ✅ produtos/variants/seller onboarding | — |
+| cart | ✅ | ✅ | — (só API síncrona) | ✅ carrinho + chamada síncrona ao catalog | — |
+| inventory | ✅ | ✅ | ✅ consumer + produtor | ✅ reserva com TTL + expiração | — (chama catalog p/ ownership) |
+| order | ✅ | ✅ | ✅ consumer + produtor | ✅ integrador da saga (agregação exactly-once) | — (chama cart/catalog no checkout) |
+| payment | ✅ | ✅ | ✅ consumer + produtor | ✅ split de pagamento | 🟡 Mercado Pago (STUB) |
+| shipping | ✅ | ✅ | ✅ consumer + produtor | ✅ cotação/envio/tracking | 🟡 Correios (STUB) |
+| notification | ✅ | ✅ | ✅ só consome | ✅ envio de email (stub) | 🟡 email/SMTP (STUB) |
 
-✅ = feito e mergeado em `master` · ⬜ = não iniciado · 🟡 = parcial (ver nota abaixo)
+✅ = feito e mergeado/na branch `feat/services-implementation` · 🟡 = parcial (ver notas) · STUB =
+port de serviço externo implementado com fake determinístico (integração real é fase posterior)
 
-🟡 **auth**: o outbox relay publica em `auth-events` (`UserRegistered`, `UserRoleChanged`), mas
-auth ainda não tem nenhum **consumer** — o consumo de `SellerOnboarded` do catalog (pra promover
-`User.role` a `SELLER`) só entra quando o plano de catalog+seller onboarding for implementado. Ver
-`docs/superpowers/plans/2026-07-09-auth-foundation.md`.
+Os 7 serviços não-auth foram implementados em 2026-07-11 seguindo a estrutura hexagonal padronizada,
+cada um com seus endpoints REST, producers/consumers Kafka (Transactional Outbox + Inbox
+`ProcessedEvent` pra idempotência), e testes (unit + e2e, todos verdes, rodados serviço a serviço).
+Integrações externas reais (Mercado Pago, Correios, SMTP) ficaram atrás de ports com stubs.
+
+🟡 **auth**: o outbox relay publica em `auth-events` (`UserRegistered`, `UserRoleChanged`), mas auth
+ainda **não consome** `SellerOnboarded` do catalog (pra promover `User.role` a `SELLER`). É o próximo
+passo pra fechar o fluxo de seller onboarding de ponta a ponta.
 
 ## Débitos técnicos / follow-ups conhecidos
 
@@ -75,10 +80,15 @@ Detalhes completos e o porquê de cada decisão: `docs/superpowers/specs/2026-07
 
 ## Próximos passos sugeridos
 
-1. Definir e implementar os producers/consumers Kafka de cada serviço (o catálogo de eventos já
-   está especificado no spec).
-2. Implementar a lógica de negócio: reserva de estoque com expiração, agregação de status da
-   saga no order-service, split de pagamento no payment-service.
-3. Integrações externas: Google OAuth (auth), Mercado Pago (payment), Correios (shipping).
-4. Resolver os débitos técnicos acima junto com o trabalho correspondente (índices junto do
-   outbox-relay, por exemplo).
+1. **auth consumer de `SellerOnboarded`** — promover `User.role` a `SELLER` e publicar
+   `UserRoleChanged`; fecha o fluxo de seller onboarding de ponta a ponta (auth ainda não tem
+   consumer nenhum; precisa adicionar `ProcessedEvent` ao schema do auth).
+2. **Teste de integração cross-service da saga** — happy path real ponta a ponta contra o
+   docker-compose (OrderCreated → StockReserved+FreightQuoted → OrderReadyForPayment →
+   PaymentConfirmed → Shipment). Nenhum agente isolado testou as costuras entre serviços.
+3. **Substituir os stubs por integrações reais**: Mercado Pago (payment), Correios (shipping),
+   SMTP/provedor de email (notification). Os ports já existem; é trocar a implementação.
+4. **Débitos técnicos**: DTOs públicos de product/variant do catalog ainda serializam preço como
+   `Number` (float) em vez de string fixed-2 (sem consumidor ainda); `order-db` teve o tracking de
+   migrations reconciliado via `db push` (migration file escrito à mão); índices em colunas de FK
+   ainda pendentes na maioria dos serviços.
