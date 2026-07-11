@@ -37,12 +37,29 @@ model FreightQuote {
   carrier        String
   price          Decimal  @db.Decimal(12, 2)
   estimatedDays  Int
+  // MUDANÇA DE SCHEMA ADITIVA (write-once, igual o resto do model).
+  // Motivo: quando o shipping reage a `PaymentConfirmed` pra criar o `Shipment`, o payload de
+  // `PaymentConfirmed` NÃO carrega addressId, e a única linha que o shipping tem por subOrder até
+  // ali é a `FreightQuote`. Sem esta coluna, não há como saber o endereço de entrega na hora de
+  // criar o Shipment. Guardamos aqui o addressId do endereço de entrega do cliente (o mesmo que
+  // veio no top-level de `OrderCreated`). Ver spec de endpoints (linhas 168-175).
+  // `npx prisma generate` foi rodado; NENHUMA migration foi criada/rodada (o orquestrador aplica).
+  addressId      String
   requestedAt    DateTime @default(now())
 }
 
 model Shipment {
   id                    String         @id @default(uuid())
   subOrderId            String         @unique
+  // MUDANÇA DE SCHEMA ADITIVA: orderId + userId denormalizados aqui.
+  // Motivo: o job periódico de rastreio lê linhas de Shipment e precisa publicar
+  // `ShipmentDispatched`/`ShipmentDelivered`, cujos payloads exigem `orderId` e `userId`. Ambos
+  // vêm no top-level de `PaymentConfirmed` (que dispara a criação do Shipment), então persistimos
+  // aqui pra o job montar o evento sem nenhum join/lookup externo — mesma convenção de
+  // "denormalize-for-events" já usada no resto do projeto. Ver spec de endpoints (linhas 225-226).
+  // `npx prisma generate` foi rodado; NENHUMA migration foi criada/rodada (o orquestrador aplica).
+  orderId               String
+  userId                String
   addressId             String
   address               Address        @relation(fields: [addressId], references: [id])
   carrier               String
