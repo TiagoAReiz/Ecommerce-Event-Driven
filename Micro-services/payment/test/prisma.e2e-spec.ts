@@ -29,7 +29,7 @@ describe('payment-db schema', () => {
   it('creates a Payment with a split per seller', async () => {
     const sellerId = randomUUID();
     const profile = await prisma.sellerPaymentProfile.create({
-      data: { sellerId, mpCollectorId: 'mp-collector-1' },
+      data: { sellerId, userId: randomUUID(), mpCollectorId: 'mp-collector-1' },
     });
     createdSellerProfileIds.push(profile.sellerId);
 
