@@ -22,6 +22,11 @@ enum NotificationType {
   ORDER_CREATED
   PAYMENT_CONFIRMED
   PAYMENT_FAILED
+  // DESVIO: PAYMENT_REFUNDED não existia no enum migrado; adicionado aditivamente porque o spec
+  // de endpoints (2026-07-08-api-endpoints-and-events-design.md, linha 234) lista `PaymentRefunded`
+  // como consumido por notification, e nenhum dos outros 6 valores do enum descreve esse e-mail
+  // corretamente. Mesma ressalva de migration do UserContact abaixo se aplica.
+  PAYMENT_REFUNDED
   SHIPMENT_DISPATCHED
   SHIPMENT_DELIVERED
   ORDER_CANCELLED
@@ -38,4 +43,21 @@ model ProcessedEvent {
   eventId     String   @unique
   eventType   String
   processedAt DateTime @default(now())
+}
+
+// Read-model local, alimentado por `UserRegistered` (auth-events). Necessário porque nenhum
+// evento de negócio (PaymentConfirmed, ShipmentDispatched etc.) carrega e-mail, só `userId` —
+// ver docs/superpowers/specs/2026-07-08-api-endpoints-and-events-design.md linhas 163-166.
+//
+// DESVIO: este model não existia no schema migrado (init migration só tinha NotificationLog +
+// ProcessedEvent). Adicionado aditivamente aqui; `npx prisma generate` foi rodado (escreve só
+// no node_modules local), mas NENHUMA migration foi criada/rodada (fora do escopo autorizado
+// deste agente). O orquestrador precisa rodar `prisma migrate dev` antes dos e2e — mesmo padrão
+// já usado pelo shipping-db para a coluna `FreightQuote.addressId` (spec de endpoints, linhas
+// 168-175).
+model UserContact {
+  userId    String   @id
+  email     String
+  name      String
+  updatedAt DateTime @updatedAt
 }
