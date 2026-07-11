@@ -14,7 +14,7 @@ para o desenho completo do modelo de dados e catálogo de eventos.
 
 | Serviço | Schema DB | Migrations | Kafka producers/consumers | Lógica de negócio | Integrações externas |
 |---|---|---|---|---|---|
-| auth | ✅ | ✅ | 🟡 produtor (falta consumer `SellerOnboarded`) | ✅ login + JWT | ✅ Google OAuth |
+| auth | ✅ | ✅ | ✅ produtor + consumer (`SellerOnboarded` → SELLER) | ✅ login + JWT | ✅ Google OAuth |
 | catalog | ✅ | ✅ | ✅ produtor (`catalog-events`) | ✅ produtos/variants/seller onboarding | — |
 | cart | ✅ | ✅ | — (só API síncrona) | ✅ carrinho + chamada síncrona ao catalog | — |
 | inventory | ✅ | ✅ | ✅ consumer + produtor | ✅ reserva com TTL + expiração | — (chama catalog p/ ownership) |
@@ -31,9 +31,10 @@ cada um com seus endpoints REST, producers/consumers Kafka (Transactional Outbox
 `ProcessedEvent` pra idempotência), e testes (unit + e2e, todos verdes, rodados serviço a serviço).
 Integrações externas reais (Mercado Pago, Correios, SMTP) ficaram atrás de ports com stubs.
 
-🟡 **auth**: o outbox relay publica em `auth-events` (`UserRegistered`, `UserRoleChanged`), mas auth
-ainda **não consome** `SellerOnboarded` do catalog (pra promover `User.role` a `SELLER`). É o próximo
-passo pra fechar o fluxo de seller onboarding de ponta a ponta.
+**auth** agora é produtor E consumer: publica `UserRegistered`/`UserRoleChanged` em `auth-events` e
+consome `SellerOnboarded` de `catalog-events` (inbox `ProcessedEvent` idempotente) pra promover
+`User.role` a `SELLER` e emitir `UserRoleChanged`. Fluxo de seller onboarding fechado de ponta a
+ponta (catalog → auth). Falta ainda: o **teste de integração cross-service da saga** ponta a ponta.
 
 ## Débitos técnicos / follow-ups conhecidos
 
@@ -80,9 +81,8 @@ Detalhes completos e o porquê de cada decisão: `docs/superpowers/specs/2026-07
 
 ## Próximos passos sugeridos
 
-1. **auth consumer de `SellerOnboarded`** — promover `User.role` a `SELLER` e publicar
-   `UserRoleChanged`; fecha o fluxo de seller onboarding de ponta a ponta (auth ainda não tem
-   consumer nenhum; precisa adicionar `ProcessedEvent` ao schema do auth).
+1. ✅ ~~auth consumer de `SellerOnboarded`~~ — feito (2026-07-11): auth promove role a `SELLER` e
+   publica `UserRoleChanged`; `ProcessedEvent` adicionado ao schema do auth.
 2. **Teste de integração cross-service da saga** — happy path real ponta a ponta contra o
    docker-compose (OrderCreated → StockReserved+FreightQuoted → OrderReadyForPayment →
    PaymentConfirmed → Shipment). Nenhum agente isolado testou as costuras entre serviços.
