@@ -15,7 +15,11 @@ const row = {
 };
 
 function buildRepo() {
-  const tx = { user: { create: jest.fn() }, outboxEvent: { create: jest.fn() } };
+  const tx = {
+    user: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    outboxEvent: { create: jest.fn() },
+    processedEvent: { findUnique: jest.fn(), create: jest.fn() },
+  };
   const prisma = {
     user: { findUnique: jest.fn(), update: jest.fn() },
     $transaction: jest.fn((cb: any) => cb(tx)),
@@ -79,6 +83,72 @@ describe('UserRepository', () => {
       },
     });
     expect(user).toBeInstanceOf(User);
+  });
+
+  describe('promoteToSellerWithInbox', () => {
+    it('no-ops (DEDUPED) when the eventId was already processed', async () => {
+      const { repo, tx } = buildRepo();
+      tx.processedEvent.findUnique.mockResolvedValue({ eventId: 'evt-1' });
+
+      const result = await repo.promoteToSellerWithInbox('evt-1', 'SellerOnboarded', 'user-1');
+
+      expect(result).toEqual({ outcome: 'DEDUPED' });
+      expect(tx.user.findUnique).not.toHaveBeenCalled();
+      expect(tx.user.update).not.toHaveBeenCalled();
+      expect(tx.outboxEvent.create).not.toHaveBeenCalled();
+      expect(tx.processedEvent.create).not.toHaveBeenCalled();
+    });
+
+    it('marks processed but does not promote when the user is unknown (USER_NOT_FOUND)', async () => {
+      const { repo, tx } = buildRepo();
+      tx.processedEvent.findUnique.mockResolvedValue(null);
+      tx.user.findUnique.mockResolvedValue(null);
+
+      const result = await repo.promoteToSellerWithInbox('evt-1', 'SellerOnboarded', 'ghost');
+
+      expect(result).toEqual({ outcome: 'USER_NOT_FOUND' });
+      expect(tx.user.update).not.toHaveBeenCalled();
+      expect(tx.outboxEvent.create).not.toHaveBeenCalled();
+      expect(tx.processedEvent.create).toHaveBeenCalledWith({
+        data: { eventId: 'evt-1', eventType: 'SellerOnboarded' },
+      });
+    });
+
+    it('is a no-op promotion (ALREADY_SELLER) when the user is already SELLER', async () => {
+      const { repo, tx } = buildRepo();
+      tx.processedEvent.findUnique.mockResolvedValue(null);
+      tx.user.findUnique.mockResolvedValue({ ...row, role: 'SELLER' });
+
+      const result = await repo.promoteToSellerWithInbox('evt-1', 'SellerOnboarded', 'user-1');
+
+      expect(result).toEqual({ outcome: 'ALREADY_SELLER' });
+      expect(tx.user.update).not.toHaveBeenCalled();
+      expect(tx.outboxEvent.create).not.toHaveBeenCalled();
+      expect(tx.processedEvent.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('promotes to SELLER and writes UserRoleChanged + inbox in one tx (PROMOTED)', async () => {
+      const { repo, prisma, tx } = buildRepo();
+      tx.processedEvent.findUnique.mockResolvedValue(null);
+      tx.user.findUnique.mockResolvedValue({ ...row, role: 'CUSTOMER' });
+
+      const result = await repo.promoteToSellerWithInbox('evt-1', 'SellerOnboarded', 'user-1');
+
+      expect(result).toEqual({ outcome: 'PROMOTED', oldRole: 'CUSTOMER' });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(tx.user.update).toHaveBeenCalledWith({ where: { id: 'user-1' }, data: { role: 'SELLER' } });
+      expect(tx.outboxEvent.create).toHaveBeenCalledWith({
+        data: {
+          aggregateType: 'User',
+          aggregateId: 'user-1',
+          eventType: 'UserRoleChanged',
+          payload: { userId: 'user-1', oldRole: 'CUSTOMER', newRole: 'SELLER' },
+        },
+      });
+      expect(tx.processedEvent.create).toHaveBeenCalledWith({
+        data: { eventId: 'evt-1', eventType: 'SellerOnboarded' },
+      });
+    });
   });
 
   it('translates P2002 into EmailAlreadyInUseException', async () => {
