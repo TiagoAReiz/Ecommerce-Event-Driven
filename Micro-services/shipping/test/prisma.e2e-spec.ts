@@ -47,12 +47,19 @@ describe('shipping-db schema', () => {
         carrier: 'PAC',
         price: '22.50',
         estimatedDays: 6,
+        addressId: address.id, // coluna aditiva (write-once) — endereço de entrega do cliente
       },
     });
     createdFreightQuoteIds.push(quote.id);
 
     const shipment = await prisma.shipment.create({
-      data: { subOrderId, addressId: address.id, carrier: quote.carrier },
+      data: {
+        subOrderId,
+        orderId: randomUUID(), // colunas aditivas denormalizadas (job de rastreio)
+        userId: address.ownerId,
+        addressId: address.id,
+        carrier: quote.carrier,
+      },
     });
     createdShipmentIds.push(shipment.id);
     expect(shipment.status).toBe('LABEL_PENDING');
@@ -68,6 +75,7 @@ describe('shipping-db schema', () => {
         carrier: 'SEDEX',
         price: '35.00',
         estimatedDays: 2,
+        addressId: randomUUID(),
       },
     });
     createdFreightQuoteIds.push(quote.id);
@@ -81,6 +89,7 @@ describe('shipping-db schema', () => {
           carrier: 'SEDEX',
           price: '40.00',
           estimatedDays: 2,
+          addressId: randomUUID(),
         },
       }),
     ).rejects.toThrow();
