@@ -3,17 +3,12 @@ import { CatalogUnavailableException } from '../../../core/exceptions/catalog-un
 import { CatalogVariant, ICatalogClient } from '../../../core/interfaces/external/catalog-client.interface';
 
 /**
- * Shape esperado da resposta do catalog-service pra uma variant.
- *
- * ASSUNÇÃO (desvio documentado): o spec de endpoints só lista `PATCH /api/v1/variants/:id`,
- * sem um GET equivalente pra leitura pontual de uma variant. Assumimos que
- * `GET /api/v1/variants/:id` existe espelhando o PATCH (mesmo recurso, mesma rota base) e
- * retorna pelo menos `{ id, sellerId, price }`. O order-service também precisa dessa mesma
- * chamada síncrona (spec, seção `POST /orders`), então essa suposição é compartilhada — vale
- * confirmar com quem implementa o catalog-service.
+ * Shape da resposta de `GET /api/v1/variants/:id` do catalog-service (variant-detail): achata
+ * dados do Product pai e serializa `price` como string fixed-2. Só usamos `variantId`, `sellerId`
+ * e `price` aqui; os demais campos (sku, title, weight/dimensões) são pro order-service.
  */
 interface CatalogVariantResponse {
-  id: string;
+  variantId: string;
   sellerId: string;
   price: string | number;
 }
@@ -42,7 +37,7 @@ export class CatalogHttpClient implements ICatalogClient {
 
     const body = (await response.json()) as CatalogVariantResponse;
     return {
-      variantId: body.id,
+      variantId: body.variantId,
       sellerId: body.sellerId,
       price: String(body.price),
     };
