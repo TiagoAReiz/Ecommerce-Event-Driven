@@ -105,7 +105,7 @@ describe('PATCH /variants/:id (e2e)', () => {
       .send({ price: 150.5 })
       .expect(200);
 
-    expect(response.body.price).toBe(150.5);
+    expect(response.body.price).toBe('150.50');
 
     const events = await prisma.outboxEvent.findMany({
       where: { eventType: 'ProductVariantPriceChanged', aggregateId: variant.id },

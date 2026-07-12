@@ -54,7 +54,7 @@ describe('ProductMapper', () => {
       productId: 'product-1',
       sku: 'SKU-1',
       attributes: {},
-      price: 199.9,
+      price: '199.90',
       weightGrams: 250,
       heightCm: 5,
       widthCm: 10,
