@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ReviewRequest } from 'src/adapters/in/dtos/review-request';
+import { ReviewRequest } from 'src/adapters/in/controllers/dtos/review-request';
 import type { IReviewRepository } from 'src/core/interfaces/repositories/review-repository-interface';
 import { IReviewService } from 'src/core/interfaces/services/review-service-interface';
 import { randomUUID } from 'crypto';
