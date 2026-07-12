@@ -6,8 +6,8 @@ import { CartItem } from '../../../core/entities/cart-item.entity';
 import {
   CartItemWithOwner,
   ICartRepository,
-  UpsertCartItemInput,
 } from '../../../core/interfaces/repositories/cart-repository.interface';
+import { UpsertCartItemInput } from '../../../core/interfaces/repositories/inputs/cart-repository.inputs';
 
 type PrismaCartWithItems = PrismaCart & { items: PrismaCartItem[] };
 

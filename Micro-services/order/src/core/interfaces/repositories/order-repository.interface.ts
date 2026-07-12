@@ -1,6 +1,7 @@
 import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { SubOrder, SubOrderStatus } from '../../entities/sub-order.entity';
+import { CreateOrderInput } from './inputs/order-repository.inputs';
 
 export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');
 
@@ -12,47 +13,6 @@ export interface SubOrderWithItems {
 export interface OrderWithSubOrders {
   order: Order;
   subOrders: SubOrderWithItems[];
-}
-
-export interface CreateOrderItemInput {
-  variantId: string;
-  sku: string;
-  title: string;
-  /** Money string, `.toFixed(2)`. */
-  unitPrice: string;
-  quantity: number;
-  weightGrams: number;
-}
-
-export interface CreateSubOrderInput {
-  /**
-   * Gerado pelo caller (application/services/order.service.ts), não pelo banco — precisamos do
-   * id ANTES do insert pra montar `outboxPayload.subOrders[].subOrderId` na mesma chamada
-   * (Prisma aceita `id` explícito mesmo com `@default(uuid())` no schema).
-   */
-  id: string;
-  sellerId: string;
-  /** Soma de `unitPrice * quantity` dos itens, `.toFixed(2)`. */
-  subtotalAmount: string;
-  items: CreateOrderItemInput[];
-}
-
-export interface CreateOrderInput {
-  /** Gerado pelo caller, mesmo motivo de `CreateSubOrderInput.id`. */
-  id: string;
-  userId: string;
-  addressId: string;
-  idempotencyKey: string;
-  /** Soma dos subtotais dos subOrders — frete ainda não é conhecido no checkout. */
-  totalAmount: string;
-  subOrders: CreateSubOrderInput[];
-  /**
-   * Payload completo de `OrderCreated` já montado pelo caller (inclui `heightCm/widthCm/
-   * lengthCm` por item — dado que o order-db NÃO persiste, só carrega no evento pro shipping
-   * cotar frete real; ver "Decisões e desvios registrados" no spec). O repositório só grava
-   * isso no outbox verbatim, na mesma transação do insert.
-   */
-  outboxPayload: unknown;
 }
 
 export interface ListFilter {

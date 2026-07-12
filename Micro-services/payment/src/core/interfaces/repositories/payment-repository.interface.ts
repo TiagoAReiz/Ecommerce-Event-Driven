@@ -1,23 +1,7 @@
 import { Payment, PaymentMethod, PaymentSplitStatus } from '../../entities/payment.entity';
+import { CreatePaymentData } from './inputs/payment-repository.inputs';
 
 export const PAYMENT_REPOSITORY = Symbol('PAYMENT_REPOSITORY');
-
-export interface CreatePaymentSplitData {
-  subOrderId: string;
-  sellerId: string;
-  mpCollectorId: string;
-  amount: string;
-  platformFeeAmount: string;
-}
-
-export interface CreatePaymentData {
-  orderId: string;
-  userId: string;
-  method: PaymentMethod;
-  totalAmount: string;
-  mpPreferenceId: string;
-  splits: CreatePaymentSplitData[];
-}
 
 export interface WebhookConfirmData {
   mpEventId: string;

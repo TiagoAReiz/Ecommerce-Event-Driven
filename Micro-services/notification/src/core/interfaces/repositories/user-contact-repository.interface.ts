@@ -1,12 +1,7 @@
 import { UserContact } from '../../entities/user-contact.entity';
+import { UpsertUserContactInput } from './inputs/user-contact-repository.inputs';
 
 export const USER_CONTACT_REPOSITORY = Symbol('USER_CONTACT_REPOSITORY');
-
-export interface UpsertUserContactInput {
-  userId: string;
-  email: string;
-  name: string;
-}
 
 export interface IUserContactRepository {
   findByUserId(userId: string): Promise<UserContact | null>;

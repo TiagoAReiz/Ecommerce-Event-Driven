@@ -4,11 +4,11 @@ import { PrismaService } from '../database/prisma.service';
 import { User, UserRole } from '../../../core/entities/user.entity';
 import { EmailAlreadyInUseException } from '../../../core/exceptions/email-already-in-use.exception';
 import {
-  CreateOutboxEventInput,
-  CreateUserInput,
   IUserRepository,
   PromoteToSellerResult,
 } from '../../../core/interfaces/repositories/user-repository.interface';
+import { CreateUserInput } from '../../../core/interfaces/repositories/inputs/user-repository.inputs';
+import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/inputs/outbox-event.input';
 
 @Injectable()
 export class UserRepository implements IUserRepository {

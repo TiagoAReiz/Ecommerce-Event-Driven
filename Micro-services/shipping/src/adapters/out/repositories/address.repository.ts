@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { Address as PrismaAddress } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { Address, AddressOwnerType } from '../../../core/entities/address.entity';
+import { IAddressRepository } from '../../../core/interfaces/repositories/address-repository.interface';
 import {
   CreateAddressData,
-  IAddressRepository,
   UpdateAddressData,
-} from '../../../core/interfaces/repositories/address-repository.interface';
+} from '../../../core/interfaces/repositories/inputs/address-repository.inputs';
 
 @Injectable()
 export class AddressRepository implements IAddressRepository {

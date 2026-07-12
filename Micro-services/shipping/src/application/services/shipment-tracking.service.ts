@@ -2,11 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Shipment } from '../../core/entities/shipment.entity';
 import { SHIPMENT_REPOSITORY } from '../../core/interfaces/repositories/shipment-repository.interface';
-import type {
-  IShipmentRepository,
-  UpdateShipmentTrackingData,
-} from '../../core/interfaces/repositories/shipment-repository.interface';
-import type { CreateOutboxEventInput } from '../../core/interfaces/repositories/freight-quote-repository.interface';
+import type { IShipmentRepository } from '../../core/interfaces/repositories/shipment-repository.interface';
+import type { UpdateShipmentTrackingData } from '../../core/interfaces/repositories/inputs/shipment-repository.inputs';
+import type { CreateOutboxEventInput } from '../../core/interfaces/repositories/inputs/outbox-event.input';
 import { TRACKING_GATEWAY } from '../../core/interfaces/external/tracking-gateway.interface';
 import type { ITrackingGateway } from '../../core/interfaces/external/tracking-gateway.interface';
 

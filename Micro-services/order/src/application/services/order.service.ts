@@ -3,13 +3,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ORDER_REPOSITORY } from '../../core/interfaces/repositories/order-repository.interface';
 import type {
-  CreateSubOrderInput,
   IOrderRepository,
   ListFilter,
   OrderWithSubOrders,
   PaginatedResult,
   SubOrderWithItems,
 } from '../../core/interfaces/repositories/order-repository.interface';
+import type { CreateSubOrderInput } from '../../core/interfaces/repositories/inputs/order-repository.inputs';
 import { CART_CLIENT } from '../../core/interfaces/external/cart-client.interface';
 import type { ICartClient } from '../../core/interfaces/external/cart-client.interface';
 import { CATALOG_CLIENT } from '../../core/interfaces/external/catalog-client.interface';

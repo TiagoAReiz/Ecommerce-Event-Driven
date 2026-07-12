@@ -1,21 +1,8 @@
+import { ReserveOrderInput } from './inputs/stock-reservation-repository.inputs';
+
 export const STOCK_RESERVATION_REPOSITORY = Symbol('STOCK_RESERVATION_REPOSITORY');
 
 export type ReleaseReason = 'PAYMENT_FAILED' | 'ORDER_CANCELLED' | 'EXPIRED';
-
-export interface ReserveItemInput {
-  variantId: string;
-  quantity: number;
-}
-
-export interface ReserveSubOrderInput {
-  subOrderId: string;
-  items: ReserveItemInput[];
-}
-
-export interface ReserveOrderInput {
-  orderId: string;
-  subOrders: ReserveSubOrderInput[];
-}
 
 /**
  * Todas as operações abaixo são atômicas: efeito de estoque + linhas de StockReservation +

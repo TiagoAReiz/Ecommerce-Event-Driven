@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { StockItem as PrismaStockItem } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { StockItem } from '../../../core/entities/stock-item.entity';
-import {
-  CreateStockItemInput,
-  IStockItemRepository,
-} from '../../../core/interfaces/repositories/stock-item-repository.interface';
+import { IStockItemRepository } from '../../../core/interfaces/repositories/stock-item-repository.interface';
+import { CreateStockItemInput } from '../../../core/interfaces/repositories/inputs/stock-item-repository.inputs';
 
 @Injectable()
 export class StockItemRepository implements IStockItemRepository {
