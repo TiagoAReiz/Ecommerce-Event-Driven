@@ -1,13 +1,7 @@
-import { Notification, NotificationType } from '../../entities/notification.entity';
+import { Notification } from '../../entities/notification.entity';
+import { CreatePendingNotificationInput } from './inputs/notification-repository.inputs';
 
 export const NOTIFICATION_REPOSITORY = Symbol('NOTIFICATION_REPOSITORY');
-
-export interface CreatePendingNotificationInput {
-  userId: string;
-  type: NotificationType;
-  recipientEmail: string;
-  subject: string;
-}
 
 export interface PaginatedResult<T> {
   items: T[];

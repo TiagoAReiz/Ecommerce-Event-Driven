@@ -4,9 +4,11 @@ import { PrismaService } from '../database/prisma.service';
 import {
   IStockReservationRepository,
   ReleaseReason,
+} from '../../../core/interfaces/repositories/stock-reservation-repository.interface';
+import {
   ReserveOrderInput,
   ReserveSubOrderInput,
-} from '../../../core/interfaces/repositories/stock-reservation-repository.interface';
+} from '../../../core/interfaces/repositories/inputs/stock-reservation-repository.inputs';
 
 // Transaction client type (subset of PrismaClient exposed inside `$transaction`).
 type Tx = Prisma.TransactionClient;

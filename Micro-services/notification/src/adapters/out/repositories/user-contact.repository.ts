@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { UserContact } from '../../../core/entities/user-contact.entity';
-import {
-  IUserContactRepository,
-  UpsertUserContactInput,
-} from '../../../core/interfaces/repositories/user-contact-repository.interface';
+import { IUserContactRepository } from '../../../core/interfaces/repositories/user-contact-repository.interface';
+import { UpsertUserContactInput } from '../../../core/interfaces/repositories/inputs/user-contact-repository.inputs';
 
 @Injectable()
 export class UserContactRepository implements IUserContactRepository {

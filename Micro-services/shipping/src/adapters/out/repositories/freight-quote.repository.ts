@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { FreightQuote as PrismaFreightQuote, Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { FreightQuote } from '../../../core/entities/freight-quote.entity';
-import {
-  IFreightQuoteRepository,
-  PersistQuotesInput,
-} from '../../../core/interfaces/repositories/freight-quote-repository.interface';
+import { IFreightQuoteRepository } from '../../../core/interfaces/repositories/freight-quote-repository.interface';
+import { PersistQuotesInput } from '../../../core/interfaces/repositories/inputs/freight-quote-repository.inputs';
 
 @Injectable()
 export class FreightQuoteRepository implements IFreightQuoteRepository {

@@ -3,16 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { ADDRESS_REPOSITORY } from '../../core/interfaces/repositories/address-repository.interface';
 import type { IAddressRepository } from '../../core/interfaces/repositories/address-repository.interface';
 import { FREIGHT_QUOTE_REPOSITORY } from '../../core/interfaces/repositories/freight-quote-repository.interface';
-import type {
-  CreateFreightQuoteData,
-  CreateOutboxEventInput,
-  IFreightQuoteRepository,
-} from '../../core/interfaces/repositories/freight-quote-repository.interface';
+import type { IFreightQuoteRepository } from '../../core/interfaces/repositories/freight-quote-repository.interface';
+import type { CreateFreightQuoteData } from '../../core/interfaces/repositories/inputs/freight-quote-repository.inputs';
+import type { CreateOutboxEventInput } from '../../core/interfaces/repositories/inputs/outbox-event.input';
 import { SHIPMENT_REPOSITORY } from '../../core/interfaces/repositories/shipment-repository.interface';
-import type {
-  CreateShipmentData,
-  IShipmentRepository,
-} from '../../core/interfaces/repositories/shipment-repository.interface';
+import type { IShipmentRepository } from '../../core/interfaces/repositories/shipment-repository.interface';
+import type { CreateShipmentData } from '../../core/interfaces/repositories/inputs/shipment-repository.inputs';
 import { FREIGHT_GATEWAY } from '../../core/interfaces/external/freight-gateway.interface';
 import type { IFreightGateway } from '../../core/interfaces/external/freight-gateway.interface';
 import {

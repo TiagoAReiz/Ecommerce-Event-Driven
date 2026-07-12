@@ -1,22 +1,8 @@
 import { User, UserRole } from '../../entities/user.entity';
+import { CreateUserInput } from './inputs/user-repository.inputs';
+import { CreateOutboxEventInput } from './inputs/outbox-event.input';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
-
-export interface CreateUserInput {
-  id: string;
-  googleId: string;
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-  role: UserRole;
-}
-
-export interface CreateOutboxEventInput {
-  aggregateType: string;
-  aggregateId: string;
-  eventType: string;
-  payload: Record<string, unknown>;
-}
 
 // Resultado de consumir um SellerOnboarded (ver promoteToSellerWithInbox). Usado pelo service só
 // para logar; nenhuma variante é um erro (todas são estados válidos e idempotentes).

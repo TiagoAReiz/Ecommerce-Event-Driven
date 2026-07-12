@@ -13,7 +13,6 @@ import {
   PaymentStatus,
 } from '../../../core/entities/payment.entity';
 import {
-  CreatePaymentData,
   IPaymentRepository,
   RefundOnCancelResult,
   SellerSplitView,
@@ -21,6 +20,7 @@ import {
   WebhookFailData,
   WebhookResult,
 } from '../../../core/interfaces/repositories/payment-repository.interface';
+import { CreatePaymentData } from '../../../core/interfaces/repositories/inputs/payment-repository.inputs';
 
 type PaymentWithSplits = PrismaPayment & { splits: PrismaPaymentSplit[] };
 

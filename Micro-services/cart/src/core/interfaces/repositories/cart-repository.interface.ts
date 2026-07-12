@@ -1,14 +1,8 @@
 import { Cart } from '../../entities/cart.entity';
 import { CartItem } from '../../entities/cart-item.entity';
+import { UpsertCartItemInput } from './inputs/cart-repository.inputs';
 
 export const CART_REPOSITORY = Symbol('CART_REPOSITORY');
-
-export interface UpsertCartItemInput {
-  variantId: string;
-  sellerId: string;
-  quantity: number;
-  unitPriceSnapshot: string;
-}
 
 export interface CartItemWithOwner {
   item: CartItem;

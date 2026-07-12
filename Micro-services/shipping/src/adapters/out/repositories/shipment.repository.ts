@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Shipment as PrismaShipment, Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { Shipment, ShipmentStatus } from '../../../core/entities/shipment.entity';
+import { IShipmentRepository } from '../../../core/interfaces/repositories/shipment-repository.interface';
 import {
   CreateShipmentData,
-  IShipmentRepository,
   UpdateShipmentTrackingData,
-} from '../../../core/interfaces/repositories/shipment-repository.interface';
-import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/freight-quote-repository.interface';
+} from '../../../core/interfaces/repositories/inputs/shipment-repository.inputs';
+import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/inputs/outbox-event.input';
 
 const TERMINAL_STATUSES: ShipmentStatus[] = ['DELIVERED', 'RETURNED'];
 

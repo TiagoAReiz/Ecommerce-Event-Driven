@@ -11,7 +11,6 @@ import { SubOrder, SubOrderStatus } from '../../../core/entities/sub-order.entit
 import { OrderItem } from '../../../core/entities/order-item.entity';
 import {
   CancelInitiator,
-  CreateOrderInput,
   IOrderRepository,
   ListFilter,
   OrderWithSubOrders,
@@ -19,6 +18,7 @@ import {
   ReleaseReason,
   SubOrderWithItems,
 } from '../../../core/interfaces/repositories/order-repository.interface';
+import { CreateOrderInput } from '../../../core/interfaces/repositories/inputs/order-repository.inputs';
 
 type Tx = Prisma.TransactionClient;
 type PrismaSubOrderWithItems = PrismaSubOrder & { items: PrismaOrderItem[] };

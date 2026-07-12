@@ -1,12 +1,7 @@
 import { StockItem } from '../../entities/stock-item.entity';
+import { CreateStockItemInput } from './inputs/stock-item-repository.inputs';
 
 export const STOCK_ITEM_REPOSITORY = Symbol('STOCK_ITEM_REPOSITORY');
-
-export interface CreateStockItemInput {
-  variantId: string;
-  sellerId: string;
-  quantity: number;
-}
 
 export interface IStockItemRepository {
   findByVariantId(variantId: string): Promise<StockItem | null>;

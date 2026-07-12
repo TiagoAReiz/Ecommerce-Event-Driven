@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { SellerPaymentProfile } from '../../../core/entities/seller-payment-profile.entity';
-import {
-  ISellerPaymentProfileRepository,
-  UpsertSellerPaymentProfileInput,
-} from '../../../core/interfaces/repositories/seller-payment-profile-repository.interface';
+import { ISellerPaymentProfileRepository } from '../../../core/interfaces/repositories/seller-payment-profile-repository.interface';
+import { UpsertSellerPaymentProfileInput } from '../../../core/interfaces/repositories/inputs/seller-payment-profile-repository.inputs';
 
 @Injectable()
 export class SellerPaymentProfileRepository implements ISellerPaymentProfileRepository {

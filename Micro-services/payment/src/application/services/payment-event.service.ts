@@ -1,9 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PAYMENT_REPOSITORY } from '../../core/interfaces/repositories/payment-repository.interface';
-import type {
-  CreatePaymentSplitData,
-  IPaymentRepository,
-} from '../../core/interfaces/repositories/payment-repository.interface';
+import type { IPaymentRepository } from '../../core/interfaces/repositories/payment-repository.interface';
+import type { CreatePaymentSplitData } from '../../core/interfaces/repositories/inputs/payment-repository.inputs';
 import { SELLER_PAYMENT_PROFILE_REPOSITORY } from '../../core/interfaces/repositories/seller-payment-profile-repository.interface';
 import type { ISellerPaymentProfileRepository } from '../../core/interfaces/repositories/seller-payment-profile-repository.interface';
 import { MERCADO_PAGO_GATEWAY } from '../../core/interfaces/external/mercado-pago.interface';

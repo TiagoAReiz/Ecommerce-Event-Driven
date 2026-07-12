@@ -3,10 +3,10 @@ import { NotificationLog as PrismaNotificationLog } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { Notification, NotificationStatus, NotificationType } from '../../../core/entities/notification.entity';
 import {
-  CreatePendingNotificationInput,
   INotificationRepository,
   PaginatedResult,
 } from '../../../core/interfaces/repositories/notification-repository.interface';
+import { CreatePendingNotificationInput } from '../../../core/interfaces/repositories/inputs/notification-repository.inputs';
 
 @Injectable()
 export class NotificationRepository implements INotificationRepository {

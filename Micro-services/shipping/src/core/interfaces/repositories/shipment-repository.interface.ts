@@ -1,23 +1,11 @@
-import { Shipment, ShipmentStatus } from '../../entities/shipment.entity';
-import { CreateOutboxEventInput } from './freight-quote-repository.interface';
+import { Shipment } from '../../entities/shipment.entity';
+import {
+  CreateShipmentData,
+  UpdateShipmentTrackingData,
+} from './inputs/shipment-repository.inputs';
+import { CreateOutboxEventInput } from './inputs/outbox-event.input';
 
 export const SHIPMENT_REPOSITORY = Symbol('SHIPMENT_REPOSITORY');
-
-export interface CreateShipmentData {
-  id: string;
-  subOrderId: string;
-  orderId: string;
-  userId: string;
-  addressId: string;
-  carrier: string;
-  estimatedDeliveryDate: Date | null;
-}
-
-export interface UpdateShipmentTrackingData {
-  status: ShipmentStatus;
-  trackingCode?: string | null;
-  estimatedDeliveryDate?: Date | null;
-}
 
 export interface IShipmentRepository {
   findBySubOrderId(subOrderId: string): Promise<Shipment | null>;

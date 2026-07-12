@@ -1,12 +1,7 @@
 import { SellerPaymentProfile } from '../../entities/seller-payment-profile.entity';
+import { UpsertSellerPaymentProfileInput } from './inputs/seller-payment-profile-repository.inputs';
 
 export const SELLER_PAYMENT_PROFILE_REPOSITORY = Symbol('SELLER_PAYMENT_PROFILE_REPOSITORY');
-
-export interface UpsertSellerPaymentProfileInput {
-  sellerId: string;
-  userId: string;
-  mpCollectorId: string;
-}
 
 export interface ISellerPaymentProfileRepository {
   findBySellerId(sellerId: string): Promise<SellerPaymentProfile | null>;
