@@ -7,14 +7,22 @@ datasource db {
 }
 
 model Order {
-  id          String      @id @default(uuid())
-  userId      String
-  addressId   String
-  status      OrderStatus @default(PENDING)
-  totalAmount Decimal     @db.Decimal(12, 2)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  subOrders   SubOrder[]
+  id              String      @id @default(uuid())
+  userId          String
+  addressId       String
+  status          OrderStatus @default(PENDING)
+  totalAmount     Decimal     @db.Decimal(12, 2)
+  // ADDITIVE (não fazia parte do schema congelado original): guarda o header `Idempotency-Key`
+  // do POST /orders. A unicidade composta (userId, idempotencyKey) É o guard contra double-submit
+  // — duas transações concorrentes tentando criar com a mesma key colidem no banco (P2002), não
+  // num check-then-insert em memória. Sem coluna de TTL dedicada: replay funciona por lookup
+  // direto; não há job de limpeza (desvio documentado, YAGNI dado o TTL "curto" pedido no spec).
+  idempotencyKey  String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  subOrders       SubOrder[]
+
+  @@unique([userId, idempotencyKey])
 }
 
 enum OrderStatus {

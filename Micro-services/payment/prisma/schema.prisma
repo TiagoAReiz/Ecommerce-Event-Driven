@@ -64,10 +64,18 @@ model MpWebhookEvent {
 }
 
 model SellerPaymentProfile {
-  sellerId      String   @id
+  sellerId String @id
+  // Additive (this phase): the read-model previously only had sellerId + mpCollectorId. The
+  // `GET /payments/splits` endpoint is authorized by ownership (JWT `userId` -> the seller's splits),
+  // and nothing else in payment-db maps a user to a seller. The `SellerOnboarded` event we consume
+  // already carries `userId`, so we persist it here and resolve userId -> sellerId locally for the
+  // ownership check. Indexed because the splits query filters by userId.
+  userId        String
   mpCollectorId String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model OutboxEvent {
