@@ -4,11 +4,9 @@ import { PrismaService } from '../database/prisma.service';
 import { Seller, SellerStatus } from '../../../core/entities/seller.entity';
 import { DuplicateSellerDocumentException } from '../../../core/exceptions/duplicate-seller-document.exception';
 import { SellerAlreadyOnboardedException } from '../../../core/exceptions/seller-already-onboarded.exception';
-import {
-  CreateOutboxEventInput,
-  CreateSellerInput,
-  ISellerRepository,
-} from '../../../core/interfaces/repositories/seller-repository.interface';
+import { ISellerRepository } from '../../../core/interfaces/repositories/seller-repository.interface';
+import { CreateSellerInput } from '../../../core/interfaces/repositories/inputs/seller-repository.inputs';
+import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/inputs/outbox-event.input';
 
 @Injectable()
 export class SellerRepository implements ISellerRepository {

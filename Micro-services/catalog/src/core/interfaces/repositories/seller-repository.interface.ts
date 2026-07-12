@@ -1,23 +1,8 @@
-import { Seller, SellerStatus } from '../../entities/seller.entity';
+import { Seller } from '../../entities/seller.entity';
+import { CreateSellerInput } from './inputs/seller-repository.inputs';
+import { CreateOutboxEventInput } from './inputs/outbox-event.input';
 
 export const SELLER_REPOSITORY = Symbol('SELLER_REPOSITORY');
-
-export interface CreateSellerInput {
-  id: string;
-  userId: string;
-  storeName: string;
-  slug: string;
-  document: string;
-  mpCollectorId: string;
-  status: SellerStatus;
-}
-
-export interface CreateOutboxEventInput {
-  aggregateType: string;
-  aggregateId: string;
-  eventType: string;
-  payload: unknown;
-}
 
 export interface ISellerRepository {
   findById(id: string): Promise<Seller | null>;

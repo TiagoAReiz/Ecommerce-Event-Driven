@@ -1,29 +1,8 @@
 import { ProductVariant } from '../../entities/product-variant.entity';
-import { CreateOutboxEventInput } from './seller-repository.interface';
+import { CreateVariantData, UpdateVariantData } from './inputs/product-variant-repository.inputs';
+import { CreateOutboxEventInput } from './inputs/outbox-event.input';
 
 export const PRODUCT_VARIANT_REPOSITORY = Symbol('PRODUCT_VARIANT_REPOSITORY');
-
-export interface CreateVariantData {
-  id: string;
-  productId: string;
-  sku: string;
-  attributes: Record<string, unknown>;
-  price: number;
-  weightGrams: number;
-  heightCm: number;
-  widthCm: number;
-  lengthCm: number;
-}
-
-export interface UpdateVariantData {
-  sku?: string;
-  attributes?: Record<string, unknown>;
-  price?: number;
-  weightGrams?: number;
-  heightCm?: number;
-  widthCm?: number;
-  lengthCm?: number;
-}
 
 /**
  * Read model for `GET /variants/:id` — the variant joined with its parent
