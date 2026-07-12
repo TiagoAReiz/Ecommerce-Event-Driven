@@ -19,7 +19,7 @@ describe('CatalogHttpClient', () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ id: 'variant-1', sellerId: 'seller-1', price: '49.90' }),
+      json: async () => ({ variantId: 'variant-1', sellerId: 'seller-1', price: '49.90' }),
     });
     global.fetch = fetchMock as any;
     const client = new CatalogHttpClient();
@@ -62,7 +62,7 @@ describe('CatalogHttpClient', () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ id: 'variant-1', sellerId: 'seller-1', price: 10 }),
+      json: async () => ({ variantId: 'variant-1', sellerId: 'seller-1', price: 10 }),
     }) as any;
     const client = new CatalogHttpClient();
 
