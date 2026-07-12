@@ -211,7 +211,7 @@ describe('Products (e2e)', () => {
       createdVariantIds.push(response.body.id);
 
       expect(response.body.productId).toBe(product.id);
-      expect(response.body.price).toBe(199.9);
+      expect(response.body.price).toBe('199.90');
     });
 
     it('rejects a variant creation for a product owned by someone else', async () => {

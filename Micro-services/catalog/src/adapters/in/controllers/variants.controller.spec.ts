@@ -57,6 +57,6 @@ describe('VariantsController', () => {
       widthCm: undefined,
       lengthCm: undefined,
     });
-    expect(result.price).toBe(249.9);
+    expect(result.price).toBe('249.90');
   });
 });
