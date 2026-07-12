@@ -83,9 +83,15 @@ Detalhes completos e o porquê de cada decisão: `docs/superpowers/specs/2026-07
 
 1. ✅ ~~auth consumer de `SellerOnboarded`~~ — feito (2026-07-11): auth promove role a `SELLER` e
    publica `UserRoleChanged`; `ProcessedEvent` adicionado ao schema do auth.
-2. **Teste de integração cross-service da saga** — happy path real ponta a ponta contra o
-   docker-compose (OrderCreated → StockReserved+FreightQuoted → OrderReadyForPayment →
-   PaymentConfirmed → Shipment). Nenhum agente isolado testou as costuras entre serviços.
+2. ✅ ~~Teste de integração cross-service da saga~~ — feito (2026-07-11): `scripts/saga-smoke-test.mjs`
+   dirige o happy path ponta a ponta contra o stack vivo (OrderCreated → StockReserved+FreightQuoted
+   → OrderReadyForPayment → webhook MP → PaymentConfirmed → Order PAID), e valida o caminho de
+   compensação (FreightQuoteFailed → OrderCancelled → StockReleased). Ver `scripts/README-saga.md`.
+   **Achou 2 bugs de costura que os testes isolados não pegavam** (já corrigidos): (a) cart lia
+   `body.id` da resposta do catalog, mas o contrato retorna `variantId`; (b) `order/main.ts` estava
+   sem `setGlobalPrefix('api/v1')`. **Requisito operacional descoberto:** os tópicos Kafka precisam
+   ser **pré-criados** — um consumer que assina um tópico ainda não produzido trava com "Unknown
+   topic or partition" (em prod: provisionar tópicos ou `auto.create.topics.enable`).
 3. **Substituir os stubs por integrações reais**: Mercado Pago (payment), Correios (shipping),
    SMTP/provedor de email (notification). Os ports já existem; é trocar a implementação.
 4. **Débitos técnicos**: DTOs públicos de product/variant do catalog ainda serializam preço como
