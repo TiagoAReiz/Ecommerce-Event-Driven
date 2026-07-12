@@ -5,12 +5,14 @@ import { ProductVariant } from '../../../core/entities/product-variant.entity';
 import { DuplicateSkuException } from '../../../core/exceptions/duplicate-sku.exception';
 import { ProductNotFoundException } from '../../../core/exceptions/product-not-found.exception';
 import {
-  CreateVariantData,
   IProductVariantRepository,
-  UpdateVariantData,
   VariantDetail,
 } from '../../../core/interfaces/repositories/product-variant-repository.interface';
-import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/seller-repository.interface';
+import {
+  CreateVariantData,
+  UpdateVariantData,
+} from '../../../core/interfaces/repositories/inputs/product-variant-repository.inputs';
+import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/inputs/outbox-event.input';
 
 @Injectable()
 export class ProductVariantRepository implements IProductVariantRepository {

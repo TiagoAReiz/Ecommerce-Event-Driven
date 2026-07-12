@@ -9,13 +9,15 @@ import { Product, ProductStatus } from '../../../core/entities/product.entity';
 import { ProductVariant } from '../../../core/entities/product-variant.entity';
 import { CategoryNotFoundException } from '../../../core/exceptions/category-not-found.exception';
 import {
-  CreateProductInput,
   IProductRepository,
   ProductFindManyFilter,
   ProductFindManyResult,
-  UpdateProductData,
 } from '../../../core/interfaces/repositories/product-repository.interface';
-import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/seller-repository.interface';
+import {
+  CreateProductInput,
+  UpdateProductData,
+} from '../../../core/interfaces/repositories/inputs/product-repository.inputs';
+import { CreateOutboxEventInput } from '../../../core/interfaces/repositories/inputs/outbox-event.input';
 
 interface Cursor {
   createdAt: string;

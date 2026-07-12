@@ -1,6 +1,7 @@
 import { Product, ProductStatus } from '../../entities/product.entity';
 import { ProductVariant } from '../../entities/product-variant.entity';
-import { CreateOutboxEventInput } from './seller-repository.interface';
+import { CreateProductInput, UpdateProductData } from './inputs/product-repository.inputs';
+import { CreateOutboxEventInput } from './inputs/outbox-event.input';
 
 export const PRODUCT_REPOSITORY = Symbol('PRODUCT_REPOSITORY');
 
@@ -18,21 +19,6 @@ export interface ProductFindManyFilter {
 export interface ProductFindManyResult {
   items: Product[];
   nextCursor: string | null;
-}
-
-export interface CreateProductInput {
-  id: string;
-  sellerId: string;
-  categoryId: string;
-  title: string;
-  description: string;
-}
-
-export interface UpdateProductData {
-  categoryId?: string;
-  title?: string;
-  description?: string;
-  status?: ProductStatus;
 }
 
 export interface IProductRepository {
