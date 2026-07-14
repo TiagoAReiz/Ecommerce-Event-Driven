@@ -1,6 +1,24 @@
+import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+
 export class ReviewRequest {
-    grade: number;
-    comment: string;
-    orderId: string;
-    productId: string;
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  grade: number;
+
+  @IsString()
+  @IsNotEmpty()
+  comment: string;
+
+  @IsString()
+  @IsNotEmpty()
+  orderId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  customerId: string;
 }
