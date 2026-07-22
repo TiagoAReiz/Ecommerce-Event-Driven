@@ -324,6 +324,27 @@ services:
         condition: service_healthy
 
   # ==========================================================================
+  # REVIEW — review-db (review-service ainda não tem Dockerfile, roda no host
+  # via `npm run start`, apontando pro REVIEW_DB_PORT exposto aqui)
+  # ==========================================================================
+  review-db:
+    <<: *postgres-base
+    container_name: review-db
+    environment:
+      POSTGRES_USER: ${REVIEW_DB_USER}
+      POSTGRES_PASSWORD: ${REVIEW_DB_PASSWORD}
+      POSTGRES_DB: ${REVIEW_DB_NAME}
+    ports:
+      - "${REVIEW_DB_PORT}:5432"
+    volumes:
+      - review_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${REVIEW_DB_USER} -d ${REVIEW_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
   # SHIPPING — shipping-db + shipping-service
   # ==========================================================================
   shipping-db:
@@ -381,4 +402,5 @@ volumes:
   notification_db_data:
   order_db_data:
   payment_db_data:
+  review_db_data:
   shipping_db_data:
