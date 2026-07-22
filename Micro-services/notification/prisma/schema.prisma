@@ -30,6 +30,7 @@ enum NotificationType {
   SHIPMENT_DISPATCHED
   SHIPMENT_DELIVERED
   ORDER_CANCELLED
+  REVIEW_RECEIVED
 }
 
 enum NotificationStatus {
@@ -59,5 +60,15 @@ model UserContact {
   userId    String   @id
   email     String
   name      String
+  updatedAt DateTime @updatedAt
+}
+
+// Read-model local, alimentado por `SellerOnboarded` (catalog-events). Necessário porque o catalog
+// não expõe `Seller.userId` publicamente (mesmo raciocínio do SellerPaymentProfile do
+// payment-service) — é o único jeito do notification-service resolver sellerId -> userId pra
+// enviar o e-mail de ReviewSent pro seller certo.
+model SellerProfile {
+  sellerId  String   @id
+  userId    String
   updatedAt DateTime @updatedAt
 }
