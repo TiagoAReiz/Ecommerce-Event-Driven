@@ -37,7 +37,7 @@ It uses two actors (a **seller** who onboards + owns the product/stock/origin-ad
    front (idempotent):
    ```bash
    cd Micro-services/order
-   node -e "const{KafkaJS}=require('@confluentinc/kafka-javascript');const k=new KafkaJS.Kafka({kafkaJS:{clientId:'admin',brokers:['localhost:9094']}});(async()=>{const a=k.admin();await a.connect();await a.createTopics({topics:['auth-events','catalog-events','inventory-events','order-events','payment-events','shipping-events'].map(t=>({topic:t,numPartitions:1,replicationFactor:1}))});await a.disconnect();})()"
+   node -e "const{KafkaJS}=require('@confluentinc/kafka-javascript');const k=new KafkaJS.Kafka({kafkaJS:{clientId:'admin',brokers:['localhost:9094']}});(async()=>{const a=k.admin();await a.connect();await a.createTopics({topics:['auth-events','catalog-events','inventory-events','order-events','payment-events','review-events','shipping-events'].map(t=>({topic:t,numPartitions:1,replicationFactor:1}))});await a.disconnect();})()"
    ```
    > In production this is an infra step (pre-provisioned topics or broker `auto.create.topics.enable`).
 
