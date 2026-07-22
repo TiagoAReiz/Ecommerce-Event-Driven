@@ -11,8 +11,14 @@ function buildService() {
     markFailed: jest.fn(),
   } as any;
   const emailSender = { send: jest.fn() } as any;
-  const service = new NotificationEventService(userContactRepository, notificationRepository, emailSender);
-  return { service, userContactRepository, notificationRepository, emailSender };
+  const sellerProfileRepository = { findBySellerId: jest.fn(), upsertWithInbox: jest.fn() } as any;
+  const service = new NotificationEventService(
+    userContactRepository,
+    notificationRepository,
+    emailSender,
+    sellerProfileRepository,
+  );
+  return { service, userContactRepository, notificationRepository, emailSender, sellerProfileRepository };
 }
 
 function makeContact(userId = 'user-1') {
@@ -196,6 +202,25 @@ describe('NotificationEventService', () => {
         eventType,
         expect.objectContaining({ userId: 'user-1', type }),
       );
+    });
+  });
+
+  describe('handleSellerOnboarded', () => {
+    it('upserts the SellerProfile read-model with dedupe via inbox', async () => {
+      const { service, sellerProfileRepository } = buildService();
+
+      await service.handleSellerOnboarded('evt-1', {
+        sellerId: 'seller-1',
+        userId: 'user-1',
+        storeName: 'Loja X',
+        document: '123',
+        mpCollectorId: 'mp-1',
+      });
+
+      expect(sellerProfileRepository.upsertWithInbox).toHaveBeenCalledWith('evt-1', 'SellerOnboarded', {
+        sellerId: 'seller-1',
+        userId: 'user-1',
+      });
     });
   });
 });
