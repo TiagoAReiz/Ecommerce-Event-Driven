@@ -16,6 +16,7 @@ import {
   PaymentConfirmedPayload,
   PaymentFailedPayload,
   PaymentRefundedPayload,
+  ReviewSentPayload,
   SellerOnboardedPayload,
   ShipmentDeliveredPayload,
   ShipmentDispatchedPayload,
@@ -92,6 +93,53 @@ export class NotificationEventService implements INotificationEventService {
       sellerId: payload.sellerId,
       userId: payload.userId,
     });
+  }
+
+  // Não reusa `dispatch()`: aqui o destinatário (o seller) precisa ser resolvido primeiro via
+  // SellerProfile — payload.sellerId não é um userId. Ausência de SellerProfile é tratada como
+  // give-up silencioso (loga e retorna sem lançar) em vez de erro retryable: normalmente indica um
+  // seller pré-existente/seedado cujo SellerOnboarded nunca foi publicado, não uma race transitória
+  // que valha a pena o Kafka reentregar. Já a ausência do UserContact do seller (perfil existe, mas
+  // sem contato) segue o padrão de `dispatch()` e lança UserContactNotFoundException, pois isso sim
+  // tende a ser uma race que a reentrega deve resolver. O nome do cliente é só cosmético pro corpo do
+  // e-mail — busca best-effort, com fallback genérico se o UserContact dele não existir.
+  async handleReviewSent(eventId: string, payload: ReviewSentPayload): Promise<void> {
+    const sellerProfile = await this.sellerProfileRepository.findBySellerId(payload.sellerId);
+    if (!sellerProfile) {
+      this.logger.warn(
+        `SellerProfile not found for sellerId ${payload.sellerId}, dropping ReviewSent ${eventId}`,
+      );
+      return;
+    }
+
+    const sellerContact = await this.userContactRepository.findByUserId(sellerProfile.userId);
+    if (!sellerContact) {
+      throw new UserContactNotFoundException(sellerProfile.userId);
+    }
+
+    const customerContact = await this.userContactRepository.findByUserId(payload.customerId);
+    const customerName = customerContact?.name ?? 'Um cliente';
+
+    const subject = 'Nova avaliação recebida';
+    const notification = await this.notificationRepository.createPendingWithInbox(eventId, 'ReviewSent', {
+      userId: sellerProfile.userId,
+      type: 'REVIEW_RECEIVED',
+      recipientEmail: sellerContact.email,
+      subject,
+    });
+    if (!notification) return; // eventId já processado (redelivery) — no-op
+
+    try {
+      await this.emailSender.send({
+        to: notification.recipientEmail,
+        subject: notification.subject,
+        body: `Olá ${sellerContact.name}, ${customerName} avaliou seu produto com nota ${payload.grade}/5: "${payload.comment}"`,
+      });
+      await this.notificationRepository.markSent(notification.id, new Date());
+    } catch (error) {
+      this.logger.error(`Failed to send notification ${notification.id}`, error as Error);
+      await this.notificationRepository.markFailed(notification.id);
+    }
   }
 
   // Fluxo comum a todo evento "notificável": resolve o contato, grava a Notification como PENDING

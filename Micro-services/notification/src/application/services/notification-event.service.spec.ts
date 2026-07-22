@@ -223,4 +223,86 @@ describe('NotificationEventService', () => {
       });
     });
   });
+
+  describe('handleReviewSent', () => {
+    const payload = {
+      reviewId: 'review-1',
+      customerId: 'customer-1',
+      productId: 'prod-1',
+      sellerId: 'seller-1',
+      grade: 5,
+      comment: 'Ótimo produto!',
+      orderId: 'order-1',
+    };
+
+    it('logs and gives up without throwing when no SellerProfile is found for sellerId', async () => {
+      const { service, sellerProfileRepository, notificationRepository, emailSender } = buildService();
+      sellerProfileRepository.findBySellerId.mockResolvedValue(null);
+
+      await service.handleReviewSent('evt-1', payload);
+
+      expect(notificationRepository.createPendingWithInbox).not.toHaveBeenCalled();
+      expect(emailSender.send).not.toHaveBeenCalled();
+    });
+
+    it('throws UserContactNotFoundException when the seller has no UserContact yet', async () => {
+      const { service, sellerProfileRepository, userContactRepository } = buildService();
+      sellerProfileRepository.findBySellerId.mockResolvedValue({ sellerId: 'seller-1', userId: 'seller-user-1' });
+      userContactRepository.findByUserId.mockResolvedValue(null);
+
+      await expect(service.handleReviewSent('evt-1', payload)).rejects.toThrow(UserContactNotFoundException);
+    });
+
+    it('emails the seller with the customer name, grade and comment when everything resolves', async () => {
+      const { service, sellerProfileRepository, userContactRepository, notificationRepository, emailSender } = buildService();
+      sellerProfileRepository.findBySellerId.mockResolvedValue({ sellerId: 'seller-1', userId: 'seller-user-1' });
+      userContactRepository.findByUserId.mockImplementation(async (userId: string) => {
+        if (userId === 'seller-user-1') return { userId, email: 'seller@example.com', name: 'Seller Store' };
+        if (userId === 'customer-1') return { userId, email: 'customer@example.com', name: 'Ana' };
+        return null;
+      });
+      notificationRepository.createPendingWithInbox.mockResolvedValue({
+        id: 'notif-1',
+        recipientEmail: 'seller@example.com',
+        subject: 'Nova avaliação recebida',
+      });
+
+      await service.handleReviewSent('evt-1', payload);
+
+      expect(notificationRepository.createPendingWithInbox).toHaveBeenCalledWith('evt-1', 'ReviewSent', {
+        userId: 'seller-user-1',
+        type: 'REVIEW_RECEIVED',
+        recipientEmail: 'seller@example.com',
+        subject: 'Nova avaliação recebida',
+      });
+      expect(emailSender.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'seller@example.com',
+          subject: 'Nova avaliação recebida',
+          body: expect.stringContaining('Ana'),
+        }),
+      );
+      expect(emailSender.send.mock.calls[0][0].body).toContain('5');
+      expect(emailSender.send.mock.calls[0][0].body).toContain('Ótimo produto!');
+      expect(notificationRepository.markSent).toHaveBeenCalledWith('notif-1', expect.any(Date));
+    });
+
+    it('falls back to a generic customer label when the customer has no UserContact', async () => {
+      const { service, sellerProfileRepository, userContactRepository, notificationRepository, emailSender } = buildService();
+      sellerProfileRepository.findBySellerId.mockResolvedValue({ sellerId: 'seller-1', userId: 'seller-user-1' });
+      userContactRepository.findByUserId.mockImplementation(async (userId: string) => {
+        if (userId === 'seller-user-1') return { userId, email: 'seller@example.com', name: 'Seller Store' };
+        return null;
+      });
+      notificationRepository.createPendingWithInbox.mockResolvedValue({
+        id: 'notif-1',
+        recipientEmail: 'seller@example.com',
+        subject: 'Nova avaliação recebida',
+      });
+
+      await service.handleReviewSent('evt-1', payload);
+
+      expect(emailSender.send.mock.calls[0][0].body).toContain('Um cliente');
+    });
+  });
 });

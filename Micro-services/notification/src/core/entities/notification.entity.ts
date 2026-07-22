@@ -5,7 +5,8 @@ export type NotificationType =
   | 'PAYMENT_REFUNDED'
   | 'SHIPMENT_DISPATCHED'
   | 'SHIPMENT_DELIVERED'
-  | 'ORDER_CANCELLED';
+  | 'ORDER_CANCELLED'
+  | 'REVIEW_RECEIVED';
 
 export type NotificationStatus = 'PENDING' | 'SENT' | 'FAILED';
 
