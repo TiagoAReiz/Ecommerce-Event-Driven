@@ -90,6 +90,14 @@ Implementação:
 - Migração aditiva no schema do review-db: tabela `OutboxEvent`, idêntica em forma à do
   payment-db (`id`, `aggregateType`, `aggregateId`, `eventType`, `payload` (Json), `status`
   (`OutboxStatus`: `PENDING`/`PUBLISHED`/`FAILED`), `createdAt`, `updatedAt`, `publishedAt`).
+- **Nota de deploy:** essa é a primeira migration real (`prisma migrate`) do review-db — antes
+  desse trabalho o serviço rodava sem histórico de migration nenhum (schema aplicado via `db push`
+  contra o dev server local do Prisma). Em qualquer ambiente onde a tabela `Review` já existir
+  fora desse histórico, `prisma migrate deploy` vai falhar com `P3005` ("database schema is not
+  empty"). Antes do primeiro deploy nesses ambientes, rodar
+  `prisma migrate resolve --applied 20260722191851_init` (e `..._add_outbox_event`, se a tabela
+  `OutboxEvent` também já existir) pra baseline o histórico antes de aplicar as migrations de
+  verdade. Ambientes com banco vazio (deploy do zero) não precisam desse passo.
 - `ReviewService.sendReview`:
   1. chama `orderClient.verifyPurchase(accessToken, orderId, productId)`.
   2. se `!eligible`, lança `ProductNotPurchasedException` — não grava nada.
