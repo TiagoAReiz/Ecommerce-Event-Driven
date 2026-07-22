@@ -5,6 +5,8 @@ import { NOTIFICATION_REPOSITORY } from '../../core/interfaces/repositories/noti
 import type { INotificationRepository } from '../../core/interfaces/repositories/notification-repository.interface';
 import { EMAIL_SENDER } from '../../core/interfaces/external/email-sender.interface';
 import type { IEmailSender } from '../../core/interfaces/external/email-sender.interface';
+import { SELLER_PROFILE_REPOSITORY } from '../../core/interfaces/repositories/seller-profile-repository.interface';
+import type { ISellerProfileRepository } from '../../core/interfaces/repositories/seller-profile-repository.interface';
 import { UserContactNotFoundException } from '../../core/exceptions/user-contact-not-found.exception';
 import { NotificationType } from '../../core/entities/notification.entity';
 import {
@@ -14,6 +16,7 @@ import {
   PaymentConfirmedPayload,
   PaymentFailedPayload,
   PaymentRefundedPayload,
+  SellerOnboardedPayload,
   ShipmentDeliveredPayload,
   ShipmentDispatchedPayload,
   UserRegisteredPayload,
@@ -33,6 +36,7 @@ export class NotificationEventService implements INotificationEventService {
     @Inject(USER_CONTACT_REPOSITORY) private readonly userContactRepository: IUserContactRepository,
     @Inject(NOTIFICATION_REPOSITORY) private readonly notificationRepository: INotificationRepository,
     @Inject(EMAIL_SENDER) private readonly emailSender: IEmailSender,
+    @Inject(SELLER_PROFILE_REPOSITORY) private readonly sellerProfileRepository: ISellerProfileRepository,
   ) {}
 
   async handleUserRegistered(eventId: string, payload: UserRegisteredPayload): Promise<void> {
@@ -81,6 +85,13 @@ export class NotificationEventService implements INotificationEventService {
       'SHIPMENT_DELIVERED',
       'Seu pedido foi entregue',
     );
+  }
+
+  async handleSellerOnboarded(eventId: string, payload: SellerOnboardedPayload): Promise<void> {
+    await this.sellerProfileRepository.upsertWithInbox(eventId, 'SellerOnboarded', {
+      sellerId: payload.sellerId,
+      userId: payload.userId,
+    });
   }
 
   // Fluxo comum a todo evento "notificável": resolve o contato, grava a Notification como PENDING
