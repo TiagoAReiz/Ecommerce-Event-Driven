@@ -57,6 +57,15 @@ export class CatalogHttpClient implements ICatalogClient {
     return { id: body.id, status: body.status };
   }
 
+  async getProductVariantIds(productId: string, accessToken: string): Promise<string[] | null> {
+    const response = await this.get(`/products/${productId}`, accessToken);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new CatalogUnavailableException();
+
+    const body = (await response.json()) as { variants: { id: string }[] };
+    return body.variants.map((v) => v.id);
+  }
+
   private async get(path: string, accessToken: string): Promise<Response> {
     try {
       return await fetch(`${this.baseUrl}${path}`, {
