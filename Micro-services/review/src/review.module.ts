@@ -18,9 +18,10 @@ import { OUTBOX_EVENT_REPOSITORY } from './core/interfaces/repositories/outbox-e
 import { OutboxEventRepository } from './adapters/out/repositories/outbox-event.repository';
 import { OutboxRelayService } from './application/services/outbox-relay.service';
 import { DomainExceptionFilter } from './adapters/in/filters/domain-exception.filter';
+import { KafkaModule } from './adapters/out/messaging/kafka/kafka.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), JwtModule.register({})],
+  imports: [ScheduleModule.forRoot(), JwtModule.register({}), KafkaModule],
   controllers: [ReviewController],
   providers: [
     { provide: REVIEW_REPOSITORY, useClass: ReviewRepository },
