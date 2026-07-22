@@ -54,7 +54,7 @@ function buildService() {
     cancelOrderForEvent: jest.fn(),
   } as any;
   const cartClient = { getCart: jest.fn(), clearCart: jest.fn() } as any;
-  const catalogClient = { getVariant: jest.fn(), getMySeller: jest.fn() } as any;
+  const catalogClient = { getVariant: jest.fn(), getMySeller: jest.fn(), getProductVariantIds: jest.fn() } as any;
   const service = new OrderService(orderRepository, cartClient, catalogClient);
   return { service, orderRepository, cartClient, catalogClient };
 }
@@ -298,6 +298,82 @@ describe('OrderService', () => {
       catalogClient.getMySeller.mockResolvedValue({ id: 'seller-42', status: 'ACTIVE' });
 
       await expect(service.getSubOrderById('token-1', 'sub-1')).resolves.toBe(found);
+    });
+  });
+
+  describe('verifyPurchase', () => {
+    it('throws OrderNotFoundException when the order does not exist', async () => {
+      const { service, orderRepository } = buildService();
+      orderRepository.findById.mockResolvedValue(null);
+
+      await expect(service.verifyPurchase('user-1', 'order-1', 'prod-1', 'token-1')).rejects.toThrow(
+        OrderNotFoundException,
+      );
+    });
+
+    it('throws OrderAccessDeniedException when the order belongs to another user', async () => {
+      const { service, orderRepository } = buildService();
+      orderRepository.findById.mockResolvedValue({ order: buildOrder({ userId: 'someone-else' }), subOrders: [] });
+
+      await expect(service.verifyPurchase('user-1', 'order-1', 'prod-1', 'token-1')).rejects.toThrow(
+        OrderAccessDeniedException,
+      );
+    });
+
+    it('is not eligible when the order is not COMPLETED yet', async () => {
+      const { service, orderRepository, catalogClient } = buildService();
+      orderRepository.findById.mockResolvedValue({
+        order: buildOrder({ userId: 'user-1', status: 'PAID' }),
+        subOrders: [{ subOrder: buildSubOrder({ sellerId: 'seller-1' }), items: [{ variantId: 'v-1' } as OrderItem] }],
+      });
+
+      const result = await service.verifyPurchase('user-1', 'order-1', 'prod-1', 'token-1');
+
+      expect(result).toEqual({ eligible: false });
+      expect(catalogClient.getProductVariantIds).not.toHaveBeenCalled();
+    });
+
+    it('is not eligible when the product does not exist in the catalog', async () => {
+      const { service, orderRepository, catalogClient } = buildService();
+      orderRepository.findById.mockResolvedValue({
+        order: buildOrder({ userId: 'user-1', status: 'COMPLETED' }),
+        subOrders: [{ subOrder: buildSubOrder({ sellerId: 'seller-1' }), items: [{ variantId: 'v-1' } as OrderItem] }],
+      });
+      catalogClient.getProductVariantIds.mockResolvedValue(null);
+
+      const result = await service.verifyPurchase('user-1', 'order-1', 'prod-missing', 'token-1');
+
+      expect(result).toEqual({ eligible: false });
+    });
+
+    it('is not eligible when none of the order items match the product variants', async () => {
+      const { service, orderRepository, catalogClient } = buildService();
+      orderRepository.findById.mockResolvedValue({
+        order: buildOrder({ userId: 'user-1', status: 'COMPLETED' }),
+        subOrders: [{ subOrder: buildSubOrder({ sellerId: 'seller-1' }), items: [{ variantId: 'v-1' } as OrderItem] }],
+      });
+      catalogClient.getProductVariantIds.mockResolvedValue(['v-other']);
+
+      const result = await service.verifyPurchase('user-1', 'order-1', 'prod-1', 'token-1');
+
+      expect(result).toEqual({ eligible: false });
+    });
+
+    it('is eligible and returns the sellerId when a sub-order item matches a product variant', async () => {
+      const { service, orderRepository, catalogClient } = buildService();
+      orderRepository.findById.mockResolvedValue({
+        order: buildOrder({ userId: 'user-1', status: 'COMPLETED' }),
+        subOrders: [
+          { subOrder: buildSubOrder({ sellerId: 'seller-A' }), items: [{ variantId: 'v-1' } as OrderItem] },
+          { subOrder: buildSubOrder({ sellerId: 'seller-B' }), items: [{ variantId: 'v-2' } as OrderItem] },
+        ],
+      });
+      catalogClient.getProductVariantIds.mockResolvedValue(['v-2']);
+
+      const result = await service.verifyPurchase('user-1', 'order-1', 'prod-1', 'token-1');
+
+      expect(result).toEqual({ eligible: true, sellerId: 'seller-B' });
+      expect(catalogClient.getProductVariantIds).toHaveBeenCalledWith('prod-1', 'token-1');
     });
   });
 });
