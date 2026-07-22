@@ -76,6 +76,16 @@ export interface SellerOnboardedPayload {
   mpCollectorId: string;
 }
 
+export interface ReviewSentPayload {
+  reviewId: string;
+  customerId: string;
+  productId: string;
+  sellerId: string;
+  grade: number;
+  comment: string;
+  orderId: string;
+}
+
 // Um método por eventType consumido; o roteamento por eventType acontece no adapter de entrada
 // (adapters/in/messaging/*-events.consumer.ts), que ignora silenciosamente eventTypes não listados
 // aqui (ex.: `OrderReadyForPayment`, `UserRoleChanged`, `FreightQuoted`).
@@ -89,4 +99,5 @@ export interface INotificationEventService {
   handleShipmentDispatched(eventId: string, payload: ShipmentDispatchedPayload): Promise<void>;
   handleShipmentDelivered(eventId: string, payload: ShipmentDeliveredPayload): Promise<void>;
   handleSellerOnboarded(eventId: string, payload: SellerOnboardedPayload): Promise<void>;
+  handleReviewSent(eventId: string, payload: ReviewSentPayload): Promise<void>;
 }
