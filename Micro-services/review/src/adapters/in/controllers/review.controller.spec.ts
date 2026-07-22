@@ -1,22 +1,31 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewController } from './review.controller';
-import { ReviewService } from '../../../application/services/review-service';
 
 function build() {
   const service = { sendReview: jest.fn(), getReviewsByProductId: jest.fn() };
-
   return { service, controller: new ReviewController(service as any) };
 }
+
+function requestWith(userId: string, bearer = 'token-1') {
+  return {
+    user: { sub: userId },
+    headers: { authorization: `Bearer ${bearer}` },
+  } as any;
+}
+
 describe('ReviewController', () => {
-  it('should send a review', async () => {
-    const { controller, service } = build();
-    const review = { grade: 5, comment: 'Great product', customerId: '1', orderId: '1', productId: '1' };
-    await service.sendReview(review);
-    expect(service.sendReview).toHaveBeenCalledWith(review);
+  describe('sendReview', () => {
+    it('derives customerId from the JWT and forwards the bearer token to the service', async () => {
+      const { controller, service } = build();
+      const review = { grade: 5, comment: 'Great product', orderId: 'order-1', productId: 'prod-1' };
+
+      await controller.sendReview(requestWith('customer-1', 'token-1'), review as any);
+
+      expect(service.sendReview).toHaveBeenCalledWith('customer-1', 'token-1', review);
+    });
   });
 
   describe('getByProductId', () => {
-    it('should return the mapped reviews for the product', async () => {
+    it('returns the mapped reviews for the product', async () => {
       const { controller, service } = build();
       const createdAt = new Date('2026-01-01T00:00:00.000Z');
       const updatedAt = new Date('2026-01-01T00:00:00.000Z');
