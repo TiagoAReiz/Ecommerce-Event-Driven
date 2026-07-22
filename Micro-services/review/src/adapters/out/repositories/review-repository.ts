@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { Review as PrismaReview } from "generated/prisma/client";
+import type { Prisma, Review as PrismaReview } from "generated/prisma/client";
 import { PrismaService } from "src/adapters/out/database/prisma.service";
 import { Review } from "src/core/entities/review-entity";
 import { ReviewInput } from "src/core/interfaces/repositories/inputs/review-input";
@@ -8,22 +8,39 @@ import type { IReviewRepository } from "src/core/interfaces/repositories/review-
 @Injectable()
 export class ReviewRepository implements IReviewRepository {
     constructor(private readonly prisma: PrismaService) { }
-    async save(review: ReviewInput): Promise<void> {
-        await this.prisma.review.create({
-            data: {
-                id: review.id,
-                grade: review.grade,
-                comment: review.comment,
-                customerId: review.customerId,
-                orderId: review.orderId,
-                productId: review.productId,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            }
 
+    async save(review: ReviewInput, sellerId: string): Promise<void> {
+        await this.prisma.$transaction(async (tx) => {
+            await tx.review.create({
+                data: {
+                    id: review.id,
+                    grade: review.grade,
+                    comment: review.comment,
+                    customerId: review.customerId,
+                    orderId: review.orderId,
+                    productId: review.productId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+            });
+
+            await tx.outboxEvent.create({
+                data: {
+                    aggregateType: 'Review',
+                    aggregateId: review.id,
+                    eventType: 'ReviewSent',
+                    payload: {
+                        reviewId: review.id,
+                        customerId: review.customerId,
+                        productId: review.productId,
+                        sellerId,
+                        grade: review.grade,
+                        comment: review.comment,
+                        orderId: review.orderId,
+                    } as Prisma.InputJsonValue,
+                },
+            });
         });
-        return;
-
     }
 
     async findByProductId(productId: string): Promise<Review[]> {
