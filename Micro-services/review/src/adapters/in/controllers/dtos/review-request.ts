@@ -17,8 +17,4 @@ export class ReviewRequest {
   @IsString()
   @IsNotEmpty()
   productId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  customerId: string;
 }
