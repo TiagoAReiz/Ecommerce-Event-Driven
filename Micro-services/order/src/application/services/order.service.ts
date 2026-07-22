@@ -14,7 +14,7 @@ import { CART_CLIENT } from '../../core/interfaces/external/cart-client.interfac
 import type { ICartClient } from '../../core/interfaces/external/cart-client.interface';
 import { CATALOG_CLIENT } from '../../core/interfaces/external/catalog-client.interface';
 import type { CatalogVariant, ICatalogClient } from '../../core/interfaces/external/catalog-client.interface';
-import type { IOrderService } from '../../core/interfaces/services/order-service.interface';
+import type { IOrderService, PurchaseVerification } from '../../core/interfaces/services/order-service.interface';
 import { EmptyCartException } from '../../core/exceptions/empty-cart.exception';
 import { VariantNotFoundException } from '../../core/exceptions/variant-not-found.exception';
 import { OrderNotFoundException } from '../../core/exceptions/order-not-found.exception';
@@ -155,6 +155,35 @@ export class OrderService implements IOrderService {
     if (!found) throw new OrderNotFoundException();
     if (found.order.userId !== userId) throw new OrderAccessDeniedException();
     return found;
+  }
+
+  async verifyPurchase(
+    userId: string,
+    orderId: string,
+    productId: string,
+    accessToken: string,
+  ): Promise<PurchaseVerification> {
+    const found = await this.orderRepository.findById(orderId);
+    if (!found) throw new OrderNotFoundException();
+    if (found.order.userId !== userId) throw new OrderAccessDeniedException();
+
+    if (found.order.status !== 'COMPLETED') {
+      return { eligible: false };
+    }
+
+    const variantIds = await this.catalogClient.getProductVariantIds(productId, accessToken);
+    if (!variantIds || variantIds.length === 0) {
+      return { eligible: false };
+    }
+
+    const variantIdSet = new Set(variantIds);
+    for (const { subOrder, items } of found.subOrders) {
+      if (items.some((item) => variantIdSet.has(item.variantId))) {
+        return { eligible: true, sellerId: subOrder.sellerId };
+      }
+    }
+
+    return { eligible: false };
   }
 
   async cancel(userId: string, orderId: string, cancelReason: string): Promise<OrderWithSubOrders> {

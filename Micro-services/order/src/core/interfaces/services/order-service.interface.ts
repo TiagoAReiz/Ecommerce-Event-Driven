@@ -10,6 +10,8 @@ import { SubOrder } from '../../entities/sub-order.entity';
 
 export const ORDER_SERVICE = Symbol('ORDER_SERVICE');
 
+export type PurchaseVerification = { eligible: true; sellerId: string } | { eligible: false };
+
 export interface IOrderService {
   /**
    * `POST /orders`. Lê o carrinho (cart-service), resnapshota preço/dados de cada variant
@@ -40,4 +42,16 @@ export interface IOrderService {
 
   /** `GET /sub-orders/:id` — mesma ownership de seller de `listBySeller`. */
   getSubOrderById(accessToken: string, subOrderId: string): Promise<SubOrderWithItems>;
+
+  /**
+   * `GET /orders/:id/verify-purchase?productId=`. Elegível quando o pedido pertence ao usuário,
+   * está `COMPLETED`, e algum item de algum sub-order corresponde a uma variant do `productId`
+   * informado (resolvido via catalog `GET /products/:id`).
+   */
+  verifyPurchase(
+    userId: string,
+    orderId: string,
+    productId: string,
+    accessToken: string,
+  ): Promise<PurchaseVerification>;
 }
