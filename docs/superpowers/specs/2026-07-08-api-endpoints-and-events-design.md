@@ -116,6 +116,7 @@ Reserva/confirmação/liberação de estoque **não tem endpoint** — 100% reat
 | POST | `/api/v1/orders/:id/cancel` | JWT + ownership | Cancelamento (bloqueado depois de `SHIPPED`). Publica `OrderCancelled` |
 | GET | `/api/v1/sub-orders` | JWT + ownership (seller) | Dashboard do seller — subOrders dele, filtro por status |
 | GET | `/api/v1/sub-orders/:id` | JWT + ownership | Detalhe de um subOrder |
+| GET | `/api/v1/orders/:id/verify-purchase?productId=` | JWT + ownership | Verifica se ordem foi paga; retorna `{ eligible, sellerId? }` (usado por review-service pra validar que cliente pode deixar review). 403/404 mesmo que `GET /orders/:id` |
 
 **`POST /orders` faz duas chamadas síncronas antes de gravar** (ambas repassando o JWT do usuário):
 1. `GET /api/v1/cart` no cart-service — lê os itens do carrinho.
@@ -164,6 +165,8 @@ Sem endpoint de escrita — é puro consumer de eventos.
 (auth-events) — necessário porque nenhum evento de negócio (`PaymentConfirmed`, `ShipmentDispatched`
 etc.) carrega e-mail, só `userId`; sem esse read-model o notification-service não teria como saber
 pra quem mandar. Mesmo padrão já usado pelo `SellerPaymentProfile` no payment-db.
+
+**Consumers adicionais:** `ReviewSent` (review-events) → envia e-mail de aviso de review ao seller; `SellerOnboarded` (catalog-events) → popula read-model `SellerProfile` para enviar e-mails ao seller.
 
 ## Mudança de schema necessária (shipping-db)
 
@@ -233,6 +236,12 @@ A partition key da mensagem é sempre o `aggregateId`.
 | `PaymentFailed` | orderId | `{ paymentId, orderId, userId, method, reason }` | order, inventory, notification |
 | `PaymentRefunded` | orderId | `{ paymentId, orderId, userId, refundedAmount, splits: [{subOrderId, sellerId, amount}] }` | order, notification |
 
+### `review-events`
+
+| Evento | key | payload | consumido por |
+|---|---|---|---|
+| `ReviewSent` | reviewId | `{ reviewId, customerId, productId, sellerId, grade, comment, orderId }` | notification |
+
 ## Decisões e desvios registrados
 
 - **`OrderCancelled` agora também é consumido por payment** (não estava no spec original) — dispara
@@ -278,4 +287,4 @@ A partition key da mensagem é sempre o `aggregateId`.
 - Revogação/blacklist de refresh token.
 - Múltiplos canais de notificação (SMS/push) e preferências de usuário.
 - Cotação de frete com múltiplas transportadoras (só Correios).
-- Cupons/descontos, reviews — já fora de escopo no spec de banco anterior, continua valendo aqui.
+- Cupons/descontos — já fora de escopo no spec de banco anterior, continua valendo aqui. Reviews saíram de escopo: ver `docs/superpowers/specs/2026-07-21-review-purchase-validation-design.md`.
