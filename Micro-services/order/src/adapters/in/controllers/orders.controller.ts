@@ -19,6 +19,7 @@ import type { PaginatedResponseDto } from './dtos/paginated-response.dto';
 import type { OrderResponseDto } from './dtos/order-response.dto';
 import type { CreateOrderDto } from './dtos/create-order.dto';
 import type { CancelOrderDto } from './dtos/cancel-order.dto';
+import type { VerifyPurchaseResponseDto } from './dtos/verify-purchase-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 const DEFAULT_PAGE_LIMIT = 20;
@@ -71,6 +72,19 @@ export class OrdersController {
   async getById(@Req() request: Request, @Param('id') id: string): Promise<OrderResponseDto> {
     const detail = await this.orderService.getById(request.user!.sub, id);
     return OrderMapper.toDetailResponse(detail);
+  }
+
+  @Get(':id/verify-purchase')
+  async verifyPurchase(
+    @Req() request: Request,
+    @Param('id') id: string,
+    @Query('productId') productId?: string,
+  ): Promise<VerifyPurchaseResponseDto> {
+    if (!productId) {
+      throw new BadRequestException('productId is required');
+    }
+    const accessToken = this.extractBearerToken(request);
+    return this.orderService.verifyPurchase(request.user!.sub, id, productId, accessToken);
   }
 
   @Post(':id/cancel')
