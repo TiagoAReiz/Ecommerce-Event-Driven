@@ -31,4 +31,10 @@ export interface ICatalogClient {
   getVariant(variantId: string, accessToken: string): Promise<CatalogVariant | null>;
   /** `GET /sellers/me` (JWT+ownership). `null` quando o usuário não tem seller (404 do catalog). */
   getMySeller(accessToken: string): Promise<CatalogSeller | null>;
+  /**
+   * `GET /products/:id` (público). Devolve os ids das variants do produto (usado por
+   * `OrderService.verifyPurchase` pra cruzar com `OrderItem.variantId`). `null` quando o produto
+   * não existe (404 do catalog).
+   */
+  getProductVariantIds(productId: string, accessToken: string): Promise<string[] | null>;
 }
