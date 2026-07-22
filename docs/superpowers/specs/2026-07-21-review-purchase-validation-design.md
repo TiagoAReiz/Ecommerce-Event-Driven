@@ -130,7 +130,9 @@ Implementação:
      estruturado nesse projeto além do at-least-once do Kafka).
   2. busca `UserContact` do seller por `userId` (do profile) — e-mail de destino.
   3. busca `UserContact` do customer por `customerId` (do payload) — só pro nome, no corpo do
-     e-mail.
+     e-mail. Diferente do seller, essa busca é best-effort: se não achar, usa um fallback genérico
+     ("Um cliente") no corpo do e-mail em vez de falhar o consumo — o nome é cosmético, não motivo
+     pra não notificar o seller.
   4. monta e envia e-mail: assunto tipo "Nova avaliação recebida", corpo com nome do customer,
      nota (`grade`) e `comment`.
   5. segue o mesmo fluxo de idempotência por inbox (`createPendingWithInbox`/`markSent`/`markFailed`)
