@@ -324,8 +324,7 @@ services:
         condition: service_healthy
 
   # ==========================================================================
-  # REVIEW — review-db (review-service ainda não tem Dockerfile, roda no host
-  # via `npm run start`, apontando pro REVIEW_DB_PORT exposto aqui)
+  # REVIEW — review-db + review-service
   # ==========================================================================
   review-db:
     <<: *postgres-base
@@ -343,6 +342,25 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  review-service:
+    <<: *app-base
+    container_name: review-service
+    build:
+      context: ./Micro-services/review
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${REVIEW_DB_USER}:${REVIEW_DB_PASSWORD}@review-db:5432/${REVIEW_DB_NAME}
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: review-service
+      KAFKA_CONSUMER_GROUP_ID: review-service-group
+    ports:
+      - "${REVIEW_APP_PORT}:3000"
+    depends_on:
+      review-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   # ==========================================================================
   # SHIPPING — shipping-db + shipping-service
