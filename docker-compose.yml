@@ -81,6 +81,8 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: auth-service
       KAFKA_CONSUMER_GROUP_ID: auth-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
     ports:
       - "${AUTH_APP_PORT}:3000"
     depends_on:
@@ -120,6 +122,8 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: cart-service
       KAFKA_CONSUMER_GROUP_ID: cart-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      CATALOG_SERVICE_URL: http://catalog-service:3000/api/v1
     ports:
       - "${CART_APP_PORT}:3000"
     depends_on:
@@ -159,6 +163,7 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: catalog-service
       KAFKA_CONSUMER_GROUP_ID: catalog-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
     ports:
       - "${CATALOG_APP_PORT}:3000"
     depends_on:
@@ -198,6 +203,8 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: inventory-service
       KAFKA_CONSUMER_GROUP_ID: inventory-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      CATALOG_SERVICE_URL: http://catalog-service:3000/api/v1
     ports:
       - "${INVENTORY_APP_PORT}:3000"
     depends_on:
@@ -237,6 +244,7 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: notification-service
       KAFKA_CONSUMER_GROUP_ID: notification-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
     ports:
       - "${NOTIFICATION_APP_PORT}:3000"
     depends_on:
@@ -276,6 +284,9 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: order-service
       KAFKA_CONSUMER_GROUP_ID: order-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      CART_SERVICE_URL: http://cart-service:3000/api/v1
+      CATALOG_SERVICE_URL: http://catalog-service:3000/api/v1
     ports:
       - "${ORDER_APP_PORT}:3000"
     depends_on:
@@ -315,6 +326,7 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: payment-service
       KAFKA_CONSUMER_GROUP_ID: payment-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
     ports:
       - "${PAYMENT_APP_PORT}:3000"
     depends_on:
@@ -354,6 +366,8 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: review-service
       KAFKA_CONSUMER_GROUP_ID: review-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      ORDER_SERVICE_URL: http://order-service:3000/api/v1
     ports:
       - "${REVIEW_APP_PORT}:3000"
     depends_on:
@@ -393,6 +407,7 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: shipping-service
       KAFKA_CONSUMER_GROUP_ID: shipping-service-group
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
     ports:
       - "${SHIPPING_APP_PORT}:3000"
     depends_on:

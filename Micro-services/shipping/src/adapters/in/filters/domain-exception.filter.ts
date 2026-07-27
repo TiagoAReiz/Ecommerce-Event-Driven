@@ -1,5 +1,6 @@
 import {
   ArgumentsHost,
+  BadGatewayException,
   BadRequestException,
   Catch,
   ExceptionFilter,
@@ -17,6 +18,7 @@ import { ShipmentAccessDeniedException } from '../../../core/exceptions/shipment
 import { SellerAddressForbiddenException } from '../../../core/exceptions/seller-address-forbidden.exception';
 import { InvalidCepException } from '../../../core/exceptions/invalid-cep.exception';
 import { CepNotFoundException } from '../../../core/exceptions/cep-not-found.exception';
+import { CepServiceUnavailableException } from '../../../core/exceptions/cep-service-unavailable.exception';
 
 // Traduz exceções de domínio (core) em HttpException do NestJS, mantendo o core livre de framework.
 // Exceções puramente do fluxo de consumo Kafka (ex.: FreightQuoteNotFoundException) NÃO aparecem em
@@ -46,6 +48,9 @@ export class DomainExceptionFilter implements ExceptionFilter {
     }
     if (exception instanceof InvalidCepException) {
       return new BadRequestException(exception.message);
+    }
+    if (exception instanceof CepServiceUnavailableException) {
+      return new BadGatewayException(exception.message);
     }
     return new InternalServerErrorException();
   }

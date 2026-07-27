@@ -20,7 +20,7 @@ para o desenho completo do modelo de dados e catálogo de eventos.
 | inventory | ✅ | ✅ | ✅ consumer + produtor | ✅ reserva com TTL + expiração | — (chama catalog p/ ownership) |
 | order | ✅ | ✅ | ✅ consumer + produtor | ✅ integrador da saga (agregação exactly-once) | — (chama cart/catalog no checkout) |
 | payment | ✅ | ✅ | ✅ consumer + produtor | ✅ split de pagamento | 🟡 Mercado Pago (STUB) |
-| shipping | ✅ | ✅ | ✅ consumer + produtor | ✅ cotação/envio/tracking | 🟡 Correios (STUB) |
+| shipping | ✅ | ✅ | ✅ consumer + produtor | ✅ cotação/envio/tracking | 🟡 ViaCEP real + Correios Preço/Prazo (STUB) |
 | notification | ✅ | ✅ | ✅ só consome | ✅ envio de email (stub) | 🟡 email/SMTP (STUB) |
 
 ✅ = feito e mergeado/na branch `feat/services-implementation` · 🟡 = parcial (ver notas) · STUB =
@@ -29,7 +29,11 @@ port de serviço externo implementado com fake determinístico (integração rea
 Os 7 serviços não-auth foram implementados em 2026-07-11 seguindo a estrutura hexagonal padronizada,
 cada um com seus endpoints REST, producers/consumers Kafka (Transactional Outbox + Inbox
 `ProcessedEvent` pra idempotência), e testes (unit + e2e, todos verdes, rodados serviço a serviço).
-Integrações externas reais (Mercado Pago, Correios, SMTP) ficaram atrás de ports com stubs.
+Integrações externas reais (Mercado Pago, Correios, SMTP) ficaram atrás de ports com stubs. **CEP**
+já foi trocado por integração real (ViaCEP, `ViaCepGateway`) — decisão explícita de não usar a API
+de CEP dos Correios porque ela também exige contrato comercial (mesma trava do Preço/Prazo). Cotação
+de frete (`stub-freight.gateway.ts`) e geração de código de rastreio (`stub-tracking.gateway.ts`)
+seguem stubadas de propósito.
 
 **auth** agora é produtor E consumer: publica `UserRegistered`/`UserRoleChanged` em `auth-events` e
 consome `SellerOnboarded` de `catalog-events` (inbox `ProcessedEvent` idempotente) pra promover
@@ -92,8 +96,11 @@ Detalhes completos e o porquê de cada decisão: `docs/superpowers/specs/2026-07
    sem `setGlobalPrefix('api/v1')`. **Requisito operacional descoberto:** os tópicos Kafka precisam
    ser **pré-criados** — um consumer que assina um tópico ainda não produzido trava com "Unknown
    topic or partition" (em prod: provisionar tópicos ou `auto.create.topics.enable`).
-3. **Substituir os stubs por integrações reais**: Mercado Pago (payment), Correios (shipping),
-   SMTP/provedor de email (notification). Os ports já existem; é trocar a implementação.
+3. **Substituir os stubs por integrações reais**: Mercado Pago (payment), Correios frete/tracking
+   (shipping), SMTP/provedor de email (notification). Os ports já existem; é trocar a implementação.
+   ✅ ~~CEP (shipping)~~ — feito: `ViaCepGateway` (viacep.com.br, sem contrato/login necessário).
+   Preço/Prazo e Pré-Postagem continuam stubados de propósito — exigem contrato comercial com os
+   Correios.
 4. **Débitos técnicos**: DTOs públicos de product/variant do catalog ainda serializam preço como
    `Number` (float) em vez de string fixed-2 (sem consumidor ainda); `order-db` teve o tracking de
    migrations reconciliado via `db push` (migration file escrito à mão); índices em colunas de FK

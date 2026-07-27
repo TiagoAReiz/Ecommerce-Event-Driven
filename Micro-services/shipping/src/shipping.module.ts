@@ -20,7 +20,7 @@ import { AddressRepository } from './adapters/out/repositories/address.repositor
 import { FreightQuoteRepository } from './adapters/out/repositories/freight-quote.repository';
 import { ShipmentRepository } from './adapters/out/repositories/shipment.repository';
 import { OutboxEventRepository } from './adapters/out/repositories/outbox-event.repository';
-import { StubCepGateway } from './adapters/out/external/stub-cep.gateway';
+import { ViaCepGateway } from './adapters/out/external/via-cep.gateway';
 import { StubFreightGateway } from './adapters/out/external/stub-freight.gateway';
 import { StubTrackingGateway } from './adapters/out/external/stub-tracking.gateway';
 import { KafkaEventPublisher } from './adapters/out/external/kafka-event-publisher';
@@ -49,7 +49,7 @@ import { EVENT_PUBLISHER } from './core/interfaces/external/event-publisher.inte
     { provide: FREIGHT_QUOTE_REPOSITORY, useClass: FreightQuoteRepository },
     { provide: SHIPMENT_REPOSITORY, useClass: ShipmentRepository },
     { provide: OUTBOX_EVENT_REPOSITORY, useClass: OutboxEventRepository },
-    { provide: CEP_GATEWAY, useClass: StubCepGateway },
+    { provide: CEP_GATEWAY, useClass: ViaCepGateway },
     { provide: FREIGHT_GATEWAY, useClass: StubFreightGateway },
     { provide: TRACKING_GATEWAY, useClass: StubTrackingGateway },
     { provide: EVENT_PUBLISHER, useClass: KafkaEventPublisher },
