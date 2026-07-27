@@ -7,6 +7,7 @@ import { ShipmentNotFoundException } from '../../../core/exceptions/shipment-not
 import { SellerAddressForbiddenException } from '../../../core/exceptions/seller-address-forbidden.exception';
 import { InvalidCepException } from '../../../core/exceptions/invalid-cep.exception';
 import { CepNotFoundException } from '../../../core/exceptions/cep-not-found.exception';
+import { CepServiceUnavailableException } from '../../../core/exceptions/cep-service-unavailable.exception';
 
 class UnmappedException extends DomainException {
   constructor() {
@@ -32,6 +33,7 @@ describe('DomainExceptionFilter', () => {
     [new AddressAccessDeniedException(), 403],
     [new SellerAddressForbiddenException(), 403],
     [new InvalidCepException('x'), 400],
+    [new CepServiceUnavailableException(), 502],
     [new UnmappedException(), 500],
   ])('maps %s to HTTP %i', (exception, status) => {
     const { host, response } = mockHost();
