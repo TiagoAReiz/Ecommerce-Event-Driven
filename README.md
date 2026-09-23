@@ -1,8 +1,18 @@
 # Ecommerce Event-Driven
 
-> Marketplace multi-seller (estilo Mercado Livre) construído como um conjunto de microservices
-> independentes, orquestrados via **coreografia de eventos** sobre Kafka — cada serviço com seu
-> próprio banco Postgres, sem API Gateway, sem orquestrador central de saga.
+> Backend de marketplace multi-seller (estilo Mercado Livre) em **9 microservices NestJS** que se
+> coordenam por **coreografia de eventos no Kafka** — saga de checkout sem orquestrador central,
+> Transactional Outbox + Inbox idempotente, um Postgres por serviço e arquitetura hexagonal.
+
+**Destaques técnicos**
+
+- Saga de checkout coreografada (estoque + frete + pagamento) com agregação *exactly-once* e compensação (`OrderCancelled` → `StockReleased`)
+- Transactional Outbox para publicar eventos e Inbox (`ProcessedEvent`) para consumo idempotente
+- Database-per-service (Postgres 16 + Prisma 7), sem joins entre serviços
+- Hexagonal (ports & adapters) padronizada em todos os serviços; integrações externas atrás de *ports*
+- Testes unitários + e2e com Jest por serviço e smoke test ponta a ponta da saga
+
+[![CI](https://github.com/TiagoAReiz/Ecommerce-Event-Driven/actions/workflows/ci.yml/badge.svg)](https://github.com/TiagoAReiz/Ecommerce-Event-Driven/actions/workflows/ci.yml)
 
 [![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -21,7 +31,7 @@ múltiplos **customers** — pense em algo no estilo Mercado Livre. Um único ch
 vários pedidos (`SubOrder`, um por seller) dentro de uma `Order` guarda-chuva, cada um seguindo seu
 próprio ciclo de vida de pagamento, estoque e envio.
 
-A arquitetura é dividida em **8 microservices independentes**, cada um com seu próprio banco
+A arquitetura é dividida em **9 microservices independentes**, cada um com seu próprio banco
 Postgres e sua própria API REST, que se comunicam de duas formas:
 
 - **Assíncrona (padrão):** publicando/consumindo eventos de domínio via **Kafka**, em coreografia —
@@ -30,7 +40,7 @@ Postgres e sua própria API REST, que se comunicam de duas formas:
   requisição do usuário (ex: checkout lendo o carrinho e os preços do catálogo), sempre repassando o
   JWT do próprio usuário — não há credencial serviço-a-serviço separada.
 
-Não existe API Gateway: o front-end (ainda não iniciado neste repositório) chamaria cada um dos 8
+Não existe API Gateway: o front-end (ainda não iniciado neste repositório) chamaria cada um dos
 serviços diretamente. Um Nginx como reverse proxy simples está planejado para mais adiante, apenas
 como camada de borda (rate limiting/roteamento), sem substituir a validação de JWT feita em cada
 serviço.
@@ -52,9 +62,10 @@ flowchart TB
         PAYMENT[payment-service<br/>Mercado Pago + splits]
         SHIPPING[shipping-service<br/>Correios: CEP + frete + tracking]
         NOTIFICATION[notification-service<br/>E-mail]
+        REVIEW[review-service<br/>Avaliações]
     end
 
-    KAFKA{{"Kafka (KRaft)<br/>auth / catalog / order / inventory / shipping / payment - events"}}
+    KAFKA{{"Kafka (KRaft)<br/>auth / catalog / order / inventory / shipping / payment / review - events"}}
 
     FE -->|REST /api/v1/*, JWT| AUTH
     FE --> CATALOG
@@ -64,10 +75,12 @@ flowchart TB
     FE --> PAYMENT
     FE --> SHIPPING
     FE --> NOTIFICATION
+    FE --> REVIEW
 
     ORDER -.->|GET /cart (síncrono)| CART
     ORDER -.->|GET /products (síncrono)| CATALOG
     CART -.->|GET /variants (síncrono)| CATALOG
+    REVIEW -.->|verifica compra (síncrono)| ORDER
 
     AUTH <--> KAFKA
     CATALOG <--> KAFKA
@@ -75,6 +88,7 @@ flowchart TB
     INVENTORY <--> KAFKA
     SHIPPING <--> KAFKA
     PAYMENT <--> KAFKA
+    REVIEW -->|publica| KAFKA
     NOTIFICATION -.->|consome| KAFKA
 
     AUTH --- AUTHDB[(auth-db)]
@@ -85,11 +99,12 @@ flowchart TB
     PAYMENT --- PAYMENTDB[(payment-db)]
     SHIPPING --- SHIPPINGDB[(shipping-db)]
     NOTIFICATION --- NOTIFICATIONDB[(notification-db)]
+    REVIEW --- REVIEWDB[(review-db)]
 ```
 
 Cada serviço fala com o Kafka usando um tópico próprio para publicar (`<serviço>-events`) e
 assina os tópicos dos eventos que precisa consumir. `cart` não publica nada (só API síncrona) e
-`notification` só consome.
+`notification` só consome; `review` só publica.
 
 ## Stack tecnológico
 
@@ -117,14 +132,15 @@ assina os tópicos dos eventos que precisa consumir. `cart` não publica nada (s
 | **payment** | Cobrança e split de pagamento por seller, webhook de confirmação | consumer + produtor (`PaymentConfirmed`, `PaymentFailed`, `PaymentRefunded`) | Mercado Pago *(stub determinístico)* |
 | **shipping** | CEP → endereço, cotação real de frete (PAC/SEDEX), geração e tracking de envio | consumer + produtor (`FreightQuoted`, `FreightQuoteFailed`, `ShipmentDispatched`, `ShipmentDelivered`) | Correios *(stub determinístico)* |
 | **notification** | Histórico e disparo de notificações por e-mail | só consumer (todos os eventos "de negócio" relevantes) | SMTP/e-mail *(stub determinístico)* |
+| **review** *(em desenvolvimento)* | Avaliações de produto/seller, só permitidas para quem comprou (valida a compra no order) | produtor (`review-events`, via outbox), consumido pelo notification | — |
 
 > Cada serviço expõe sua API sob `/api/v1/*`, autenticação via `Authorization: Bearer <jwt>` e
 > autorização por **ownership** (confere `Seller.userId == req.user.id` no próprio banco, não confia
 > cegamente na claim `role` do token). Veja o desenho completo de rotas e payloads de evento em
 > [`docs/superpowers/specs/2026-07-08-api-endpoints-and-events-design.md`](docs/superpowers/specs/2026-07-08-api-endpoints-and-events-design.md).
 
-Há ainda um **9º serviço em desenvolvimento**, `review` (avaliações de produto/seller), que segue a
-mesma estrutura hexagonal mas ainda não está conectado ao `docker-compose.yml` nem ao Kafka.
+O `review` é o serviço mais recente: já está no `docker-compose.yml` e publica em `review-events`,
+mas ainda está em evolução (ver [`docs/STATE.md`](docs/STATE.md)).
 
 ## Fluxo da saga (happy path)
 
@@ -175,18 +191,19 @@ Esse caminho de compensação é validado pelo smoke test em `scripts/saga-smoke
 
 ```
 .
-├── docker-compose.yml          # Kafka (KRaft) + 8x Postgres + 8x app, rede e volumes compartilhados
+├── docker-compose.yml          # Kafka (KRaft) + 9x Postgres + 9x app, rede e volumes compartilhados
 ├── .env.example                # template de variáveis (copie para .env)
+├── .github/workflows/ci.yml    # CI: install + lint + testes unitários + build por serviço
 ├── Micro-services/
 │   ├── auth/                   # Google OAuth, JWT, roles
 │   ├── catalog/                # produtos, variants, sellers, categorias
 │   ├── cart/                   # carrinho
-│   ├── inventory/               # estoque e reservas
+│   ├── inventory/              # estoque e reservas
 │   ├── order/                  # checkout e agregação da saga
 │   ├── payment/                # cobrança, split, webhook Mercado Pago
 │   ├── shipping/               # CEP, frete, envio/tracking
 │   ├── notification/           # e-mails
-│   └── review/                 # avaliações (em desenvolvimento, fora do compose)
+│   └── review/                 # avaliações (em desenvolvimento)
 │       └── src/
 │           ├── core/            # entidades + portas (interfaces), zero dependência de framework
 │           ├── application/     # services (lógica de negócio) + mappers
@@ -223,7 +240,7 @@ HTTP. Detalhes em
 cp .env.example .env
 # ajuste os valores se precisar (portas, credenciais dos bancos)
 
-# 2. Suba Kafka + os 8 Postgres + os 8 microservices
+# 2. Suba Kafka + os 9 Postgres + os 9 microservices
 docker compose up --build
 
 # 3. (opcional) acompanhar logs de um serviço específico
@@ -233,8 +250,13 @@ docker compose logs -f order-service
 Isso sobe:
 
 - 1 broker **Kafka** (modo KRaft, sem Zookeeper), exposto em `localhost:${KAFKA_HOST_PORT}`
-- 8 bancos **Postgres**, um por serviço, cada um com seu próprio volume nomeado
-- 8 **apps NestJS**, cada uma na sua porta (`AUTH_APP_PORT`, `CART_APP_PORT`, ... — ver `.env.example`)
+- 9 bancos **Postgres**, um por serviço, cada um com seu próprio volume nomeado
+- 9 **apps NestJS**, cada uma na sua porta (`AUTH_APP_PORT`, `CART_APP_PORT`, ... — ver `.env.example`)
+
+> O `docker-compose.yml` hoje repassa aos serviços apenas banco, Kafka e segredos JWT. Variáveis
+> como `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI` (login no auth) e
+> `MP_WEBHOOK_SECRET` (webhook do payment) ainda não estão no `.env.example` nem no compose — para
+> exercitar esses fluxos, rode o serviço fora do container com essas variáveis definidas.
 
 > Os tópicos Kafka precisam existir antes de um consumer assinar (um consumer que assina um tópico
 > ainda não produzido trava com `Unknown topic or partition`). Em produção isso é resolvido
@@ -253,8 +275,12 @@ npm run start:dev
 ```bash
 cd Micro-services/<serviço>
 npm run test        # unit
-npm run test:e2e    # e2e
+npm run test:e2e    # e2e (precisa do Postgres do serviço rodando, ex: docker compose up -d <serviço>-db)
 ```
+
+No CI (GitHub Actions, [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) cada serviço roda
+`npm ci`, `prisma generate`, lint (ainda não bloqueante), testes unitários e `nest build`. Os e2e
+ficam de fora do CI por dependerem de Postgres/Kafka.
 
 Há também um smoke test de saga que exercita o fluxo completo de checkout contra os serviços e a
 infra vivos (ver [`scripts/README-saga.md`](scripts/README-saga.md) para o passo a passo):
@@ -271,10 +297,9 @@ vivo em [`docs/STATE.md`](docs/STATE.md) — inclusive débitos técnicos conhec
 Resumo rápido:
 
 - Os 8 microservices do desenho original têm schema, migrations, testes (unit + e2e) e a lógica de
-  negócio principal implementados.
+  negócio principal implementados; o `review` (9º) está em desenvolvimento.
 - Integrações externas reais (Mercado Pago, Correios, SMTP) ainda estão atrás de *ports* com
   implementações stub determinísticas — os *adapters* reais são a próxima fase.
-- O serviço `review` está em desenvolvimento e ainda não integrado ao `docker-compose.yml`.
 - Front-end e reverse proxy (Nginx) ainda não foram iniciados.
 
 ## Documentação adicional
