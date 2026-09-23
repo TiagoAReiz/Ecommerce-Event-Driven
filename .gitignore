@@ -1,14 +1,27 @@
 # Env files (contêm credenciais locais, não commitar)
 .env
-.env.local
+.env.*
+!.env.example
 
 # Node
 node_modules/
 dist/
+build/
 coverage/
+.nyc_output/
+*.tsbuildinfo
+.npm/
+
+# Prisma client gerado (npx prisma generate)
+generated/
 
 # Logs
 *.log
+logs/
 
-# OS
+# IDE / OS
+.idea/
+.vscode/
+*.swp
 .DS_Store
+Thumbs.db
