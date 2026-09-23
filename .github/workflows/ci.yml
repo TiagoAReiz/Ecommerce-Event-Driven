@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  service:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [auth, cart, catalog, inventory, notification, order, payment, review, shipping]
+    defaults:
+      run:
+        working-directory: Micro-services/${{ matrix.service }}
+    env:
+      # prisma generate não conecta no banco; a URL só precisa existir para o prisma.config.ts
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Micro-services/${{ matrix.service }}/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      # Informativo por enquanto: o código ainda tem erros de lint pendentes.
+      # `npm run lint` usa --fix, então aqui o eslint roda direto, sem alterar arquivos.
+      - name: Lint (não bloqueante)
+        continue-on-error: true
+        run: npx eslint "{src,apps,libs,test}/**/*.ts"
+
+      - name: Unit tests
+        run: npm test -- --ci
+
+      - name: Build
+        run: npm run build
